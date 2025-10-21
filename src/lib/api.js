@@ -62,3 +62,5 @@ export const authRefresh = ({ refresh_token, device_id }) =>
 
 export const authLogout = ({ refresh_token }) =>
   api.post("/auth/logout", { refresh_token });
+
+export const authMe = () => api.get("/auth/me");

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { FiEdit3, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
-import { getQueries } from "../lib/api"
+import { getQueries, authMe } from "../lib/api"
 import { authLogout } from "../lib/api"
 import { clearTokens, getRefreshToken, getUserInfo, colorFromString } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
@@ -12,6 +12,7 @@ export default function Sidebar({ onSelect }) {
   const navigate = useNavigate()
 
   const user = getUserInfo()
+  const [fullName, setFullName] = useState("")
   const email = user?.email || "usuario@aura";
   const initial = (email[0] || "U").toUpperCase();
   const avatarBg = colorFromString(email);
@@ -34,6 +35,20 @@ export default function Sidebar({ onSelect }) {
     }
     fetchData()
   }, [])
+
+  // Cargar perfil del usuario para mostrar nombre si existe
+  useEffect(() => {
+    const loadMe = async () => {
+      try {
+        const { data } = await authMe()
+        const name = data?.profile?.full_name || ""
+        if (name) setFullName(name)
+      } catch {
+        // si falla, mantenemos email
+      }
+    }
+    if (user) loadMe()
+  }, [user])
 
   return (
     <div className="w-80 bg-gray-900 text-white h-screen flex flex-col">
@@ -108,7 +123,7 @@ export default function Sidebar({ onSelect }) {
           <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}>
             <span className="text-white text-sm font-medium">{initial}</span>
           </div>
-          <span className="text-sm truncate" title={email}>{email}</span>
+          <span className="text-sm truncate" title={fullName || email}>{fullName || email}</span>
         </div>
       </div>
     </div>
