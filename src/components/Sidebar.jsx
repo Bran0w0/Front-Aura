@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { FiEdit3, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
 import { getQueries } from "../lib/api"
 import { authLogout } from "../lib/api"
-import { clearTokens, getRefreshToken } from "../lib/auth"
+import { clearTokens, getRefreshToken, getUserInfo, colorFromString } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
 export default function Sidebar({ onSelect }) {
@@ -10,6 +10,11 @@ export default function Sidebar({ onSelect }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+
+  const user = getUserInfo()
+  const email = user?.email || "usuario@aura";
+  const initial = (email[0] || "U").toUpperCase();
+  const avatarBg = colorFromString(email);
 
   const USER_EMAIL = "jose@example.com"
 
@@ -100,10 +105,10 @@ export default function Sidebar({ onSelect }) {
           <FiLogOut className="w-5 h-5" /><span>Salir</span>
         </button>
         <div className="flex items-center gap-3 p-2">
-          <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-            <span className="text-white text-sm font-medium">F</span>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}>
+            <span className="text-white text-sm font-medium">{initial}</span>
           </div>
-          <span className="text-sm">Fernando Gutierrez</span>
+          <span className="text-sm truncate" title={email}>{email}</span>
         </div>
       </div>
     </div>
