@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react"
-import { FiEdit3, FiSearch, FiMapPin, FiSettings, FiSidebar } from "react-icons/fi"
+import { FiEdit3, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
 import { getQueries } from "../lib/api"
+import { authLogout } from "../lib/api"
+import { clearTokens, getRefreshToken } from "../lib/auth"
+import { useNavigate } from "react-router-dom"
 
 export default function Sidebar({ onSelect }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const navigate = useNavigate()
 
   const USER_EMAIL = "jose@example.com"
 
@@ -78,6 +82,22 @@ export default function Sidebar({ onSelect }) {
       <div className="p-4 border-t border-gray-700 space-y-3">
         <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-800 rounded-lg transition-colors">
           <FiSettings className="w-5 h-5" /><span>Ajustes</span>
+        </button>
+        <button
+          onClick={async () => {
+            const rt = getRefreshToken()
+            try {
+              if (rt) await authLogout({ refresh_token: rt })
+            } catch {
+              // ignora errores; de todas formas limpiaremos el estado local
+            } finally {
+              clearTokens()
+              navigate("/login", { replace: true })
+            }
+          }}
+          className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-800 rounded-lg transition-colors"
+        >
+          <FiLogOut className="w-5 h-5" /><span>Salir</span>
         </button>
         <div className="flex items-center gap-3 p-2">
           <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
