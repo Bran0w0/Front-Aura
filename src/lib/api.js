@@ -43,6 +43,9 @@ export const createMessage = (payload) => api.post("/chat/messages", payload);
 export const getMessages = ({ conversation_id, user_id } = {}) =>
   api.get("/chat/messages", { params: { ...(conversation_id ? { conversation_id } : {}), ...(user_id ? { user_id } : {}) } });
 
+// --- Chat orchestration ---
+export const chatAsk = (payload) => api.post("/chat/ask", payload);
+
 // --- Aura IA ---
 export const auraAsk = (payload) => api.post("/aura/ask", payload);
 
@@ -67,3 +70,19 @@ export const authLogout = ({ refresh_token }) =>
   api.post("/auth/logout", { refresh_token });
 
 export const authMe = () => api.get("/auth/me");
+// --- Academics: Catálogos ---
+export const createDepartment = (payload) => api.post("/academics/departments", payload);
+export const getDepartments = () => api.get("/academics/departments");
+export const createProgram = (payload) => api.post("/academics/programs", payload);
+export const getPrograms = (department_code) => api.get("/academics/programs", { params: department_code ? { department_code } : {} });
+export const createPeriod = (payload) => api.post("/academics/periods", payload);
+export const getPeriods = (status_f) => api.get("/academics/periods", { params: status_f ? { status_f } : {} });
+export const createCourse = (payload) => api.post("/academics/courses", payload);
+export const getCourses = () => api.get("/academics/courses");
+
+// --- Academics: Timetables ---
+export const createTimetable = (payload) => api.post("/academics/timetables", payload);
+export const getTimetables = (params = {}) => api.get("/academics/timetables", { params });
+export const publishTimetable = (id) => api.post(`/academics/timetables/${id}/publish`);
+export const createTimetableEntries = (payload) => api.post("/academics/timetable-entries", payload);
+export const getTimetableEntries = (timetable_id) => api.get("/academics/timetable-entries", { params: { timetable_id } });

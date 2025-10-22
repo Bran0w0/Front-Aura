@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react"
 import { FiMic } from "react-icons/fi"
-import { auraAsk, createConversation, createMessage, getMessages } from "../lib/api"
+import { chatAsk, getMessages } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
 export default function ChatArea({ selected }) {
@@ -44,28 +44,16 @@ export default function ChatArea({ selected }) {
     try {
       const uid = getUserInfo()?.id
       // Asegura conversación
-      let cid = conversationId
-      if (!cid) {
-        const { data: c } = await createConversation({ user_id: uid, title: pregunta })
-        cid = c?.id
-        if (cid) setConversationId(cid)
+      const { data } = await chatAsk({ user_id: uid, content: pregunta, conversation_id: conversationId || null, create_if_missing: true })
+      const cid = data?.conversation_id
+      if (cid && !conversationId) setConversationId(cid)
+      const userMsg = data?.user_message
+      const asstMsg = data?.assistant_message
+      if (userMsg?.content && !messages.find((m) => m.content === userMsg.content)) {
+        // Asegura el título del sidebar
+        try { window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: userMsg.content } })) } catch {}
       }
-      // Guarda mensaje del usuario
-      if (cid) {
-        try { await createMessage({ conversation_id: cid, user_id: uid, role: "user", content: pregunta }) } catch {}
-        // Anuncia título derivado del primer mensaje para actualizar Sidebar al instante
-        try {
-          window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: pregunta } }))
-        } catch {}
-      }
-      // Pide respuesta a Aura (temporal mientras el back no responde en /chat/messages)
-      const { data } = await auraAsk({ usuario_correo: getUserInfo()?.email || "user@example.com", pregunta })
-      const respuesta = data?.respuesta ?? "Sin respuesta"
-      setMessages((m) => [...m, { role: "assistant", content: respuesta }])
-      // Guarda respuesta del asistente
-      if (cid) {
-        try { await createMessage({ conversation_id: cid, user_id: uid, role: "assistant", content: respuesta }) } catch {}
-      }
+      setMessages((m) => [...m.filter(Boolean), { role: "assistant", content: asstMsg?.content || "Sin respuesta" }])
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
     } finally {

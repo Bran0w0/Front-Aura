@@ -1,5 +1,6 @@
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Timetable from "./pages/Timetable";
 import { getAccessToken } from "./lib/auth";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
@@ -28,6 +29,14 @@ export default function App() {
           element={
             <RequireAuth>
               <Home />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/timetable"
+          element={
+            <RequireAuth>
+              <Timetable />
             </RequireAuth>
           }
         />

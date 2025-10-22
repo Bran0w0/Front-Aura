@@ -101,7 +101,7 @@ export default function Sidebar({ onSelect }) {
         <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-800 rounded-lg transition-colors">
           <FiSearch className="w-5 h-5" /><span>Buscar chats</span>
         </button>
-        <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-800 rounded-lg transition-colors">
+        <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-gray-800 rounded-lg transition-colors" onClick={() => navigate("/timetable")}>
           <FiMapPin className="w-5 h-5" /><span>Ubícate</span>
         </button>
       </div>
