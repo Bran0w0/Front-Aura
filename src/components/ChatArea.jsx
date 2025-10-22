@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react"
 import { FiMic } from "react-icons/fi"
-import { auraAsk } from "../lib/api"
+import { auraAsk, createConversation, createMessage, getMessages } from "../lib/api"
+import { getUserInfo } from "../lib/auth"
 
 export default function ChatArea({ selected }) {
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState([])
+  const [conversationId, setConversationId] = useState(null)
 
   const suggestions = [
     { icon: "🍟", text: "Llévame a McDoñas" },
@@ -15,12 +17,22 @@ export default function ChatArea({ selected }) {
 
   // cuando seleccionas un chat en el sidebar
   useEffect(() => {
-    if (selected) {
-      setMessages([
-        { role: "user", content: selected.pregunta || "" },
-        { role: "assistant", content: selected.respuesta || "" },
-      ])
+    const load = async () => {
+      if (!selected?.conversation_id) {
+        setConversationId(null)
+        setMessages([])
+        return
+      }
+      setConversationId(selected.conversation_id)
+      try {
+        const { data } = await getMessages({ conversation_id: selected.conversation_id })
+        const msgs = (data?.messages || []).map((m) => ({ role: m.role, content: m.content }))
+        setMessages(msgs)
+      } catch {
+        setMessages([])
+      }
     }
+    load()
   }, [selected])
 
   const sendQuestion = async (q) => {
@@ -30,12 +42,30 @@ export default function ChatArea({ selected }) {
     setMessages((m) => [...m, { role: "user", content: pregunta }])
     setText("")
     try {
-      const { data } = await auraAsk({
-        usuario_correo: "jose@example.com",
-        pregunta,
-      })
+      const uid = getUserInfo()?.id
+      // Asegura conversación
+      let cid = conversationId
+      if (!cid) {
+        const { data: c } = await createConversation({ user_id: uid, title: pregunta })
+        cid = c?.id
+        if (cid) setConversationId(cid)
+      }
+      // Guarda mensaje del usuario
+      if (cid) {
+        try { await createMessage({ conversation_id: cid, user_id: uid, role: "user", content: pregunta }) } catch {}
+        // Anuncia título derivado del primer mensaje para actualizar Sidebar al instante
+        try {
+          window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: pregunta } }))
+        } catch {}
+      }
+      // Pide respuesta a Aura (temporal mientras el back no responde en /chat/messages)
+      const { data } = await auraAsk({ usuario_correo: getUserInfo()?.email || "user@example.com", pregunta })
       const respuesta = data?.respuesta ?? "Sin respuesta"
       setMessages((m) => [...m, { role: "assistant", content: respuesta }])
+      // Guarda respuesta del asistente
+      if (cid) {
+        try { await createMessage({ conversation_id: cid, user_id: uid, role: "assistant", content: respuesta }) } catch {}
+      }
     } catch {
       setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
     } finally {

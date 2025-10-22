@@ -30,15 +30,18 @@ export const createSchedule = (payload) => api.post("/schedules", payload);
 export const getSchedules = (usuario_correo) =>
   api.get("/schedules", { params: usuario_correo ? { usuario_correo } : {} });
 
-// --- Notes (antes: /add-nota, /notas) ---
-export const createNote = (payload) => api.post("/notes", payload);
-export const getNotes = (usuario_correo) =>
-  api.get("/notes", { params: usuario_correo ? { usuario_correo } : {} });
+// --- Note (singular, reemplaza notas/notes) ---
+export const createNote = (payload) => api.post("/note", payload);
+export const getNote = ({ user_id, status, tag } = {}) =>
+  api.get("/note", { params: { ...(user_id ? { user_id } : {}), ...(status ? { status_f: status } : {}), ...(tag ? { tag } : {}) } });
 
-// --- Queries (antes: /consultas) ---
-export const createQuery = (payload) => api.post("/queries", payload);
-export const getQueries = (usuario_correo) =>
-  api.get("/queries", { params: usuario_correo ? { usuario_correo } : {} });
+// --- Chat (conversations/messages) ---
+export const createConversation = (payload) => api.post("/chat/conversations", payload);
+export const getConversations = ({ user_id, status } = {}) =>
+  api.get("/chat/conversations", { params: { ...(user_id ? { user_id } : {}), ...(status ? { status_f: status } : {}) } });
+export const createMessage = (payload) => api.post("/chat/messages", payload);
+export const getMessages = ({ conversation_id, user_id } = {}) =>
+  api.get("/chat/messages", { params: { ...(conversation_id ? { conversation_id } : {}), ...(user_id ? { user_id } : {}) } });
 
 // --- Aura IA ---
 export const auraAsk = (payload) => api.post("/aura/ask", payload);
