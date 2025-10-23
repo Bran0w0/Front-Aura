@@ -50,7 +50,7 @@ export default function Timetable() {
   }, [entries]);
 
   return (
-    <div className="flex-1 p-6 text-white bg-gray-950">
+    <div className="flex-1 p-6 text-white bg-[#040B17]">
       <h1 className="text-2xl font-semibold mb-2">Mi horario</h1>
       {header && (
         <p className="text-gray-400 mb-6">{header.title} · {header.shift || ""}</p>
