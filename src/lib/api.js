@@ -1,6 +1,6 @@
 // src/lib/api.js
 import axios from "axios";
-import { getDeviceId } from "./auth";
+import { getDeviceId, getSessionId } from "./auth";
 
 const api = axios.create({
   // Recomendado: define VITE_API_URL=http://127.0.0.1:8000/api
@@ -12,6 +12,11 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const t = localStorage.getItem("aura_access_token");
   if (t) config.headers.Authorization = `Bearer ${t}`;
+  else {
+    // modo invitado: enviar session id
+    const sid = getSessionId();
+    if (sid) config.headers["X-Session-Id"] = sid;
+  }
   return config;
 });
 

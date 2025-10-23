@@ -1,5 +1,6 @@
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import GuestHome from "./pages/GuestHome";
 import Timetable from "./pages/Timetable";
 import { getAccessToken } from "./lib/auth";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
@@ -40,8 +41,8 @@ export default function App() {
             </RequireAuth>
           }
         />
-        <Route path="/" element={<Navigate to="/home" replace />} />
-        <Route path="*" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<GuestHome />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react"
 import { FiEdit3, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
 import { getConversations, createConversation, authMe } from "../lib/api"
 import { authLogout } from "../lib/api"
-import { clearTokens, getRefreshToken, getUserInfo, colorFromString } from "../lib/auth"
+import { clearTokens, getRefreshToken, getUserInfo, colorFromString, getSessionId } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
 export default function Sidebar({ onSelect }) {
@@ -21,13 +21,15 @@ export default function Sidebar({ onSelect }) {
     const fetchData = async () => {
       try {
         const uid = getUserInfo()?.id
-        if (!uid) throw new Error("NO_USER")
-        const { data } = await getConversations({ user_id: uid })
-        const list = (data?.conversations || []).map((c) => ({
-          conversation_id: c.id,
-          title: c.title || "Nuevo chat",
-          updated_at: c.updated_at || "",
-        }))
+        let list = []
+        if (uid) {
+          const { data } = await getConversations({ user_id: uid })
+          list = (data?.conversations || []).map((c) => ({ conversation_id: c.id, title: c.title || "Nuevo chat", updated_at: c.updated_at || "" }))
+        } else {
+          const sid = getSessionId()
+          const { data } = await getConversations({ session_id: sid })
+          list = (data?.conversations || []).map((c) => ({ conversation_id: c.id, title: c.title || "Nuevo chat", updated_at: c.updated_at || "" }))
+        }
         list.sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""))
         setItems(list)
       } catch {
@@ -84,13 +86,19 @@ export default function Sidebar({ onSelect }) {
           onClick={async () => {
             try {
               const uid = getUserInfo()?.id
-              if (!uid) return
-              const { data } = await createConversation({ user_id: uid, title: "Nuevo chat" })
-              const cid = data?.id
-              if (!cid) return
-              const newItem = { conversation_id: cid, title: "Nuevo chat", updated_at: new Date().toISOString() }
-              setItems((prev) => [newItem, ...prev])
-              onSelect?.(newItem)
+              if (uid) {
+                const { data } = await createConversation({ user_id: uid, title: "Nuevo chat" })
+                const cid = data?.id
+                if (!cid) return
+                const newItem = { conversation_id: cid, title: "Nuevo chat", updated_at: new Date().toISOString() }
+                setItems((prev) => [newItem, ...prev])
+                onSelect?.(newItem)
+              } else {
+                // Modo invitado: limpia selección; la conversación se crea con /chat/ask al enviar
+                const newItem = { conversation_id: null, title: "Nuevo chat", updated_at: new Date().toISOString() }
+                setItems((prev) => [newItem, ...prev])
+                onSelect?.(newItem)
+              }
             } catch (e) {
               // ignore
             }

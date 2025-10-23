@@ -15,6 +15,17 @@ export function getDeviceId() {
   return id;
 }
 
+export function getSessionId() {
+  const key = "aura_session_id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    if (window.crypto?.randomUUID) id = window.crypto.randomUUID();
+    else id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
 export function saveTokens({ access_token, refresh_token }) {
   if (access_token) localStorage.setItem("aura_access_token", access_token);
   if (refresh_token) localStorage.setItem("aura_refresh_token", refresh_token);
