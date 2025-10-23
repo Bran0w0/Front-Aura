@@ -1,5 +1,6 @@
 // src/lib/api.js
 import axios from "axios";
+import { getDeviceId } from "./auth";
 
 const api = axios.create({
   // Recomendado: define VITE_API_URL=http://127.0.0.1:8000/api
@@ -13,6 +14,34 @@ api.interceptors.request.use((config) => {
   if (t) config.headers.Authorization = `Bearer ${t}`;
   return config;
 });
+
+// Auto-refresh en 401 y reintenta 1 vez
+api.interceptors.response.use(
+  (res) => res,
+  async (error) => {
+    const { response, config } = error || {};
+    if (response && response.status === 401 && !config?._retry) {
+      const rt = localStorage.getItem("aura_refresh_token");
+      if (!rt) throw error;
+      config._retry = true;
+      try {
+        const device_id = getDeviceId();
+        const { data } = await api.post("/auth/refresh", { refresh_token: rt, device_id });
+        if (data?.access_token) localStorage.setItem("aura_access_token", data.access_token);
+        if (data?.refresh_token) localStorage.setItem("aura_refresh_token", data.refresh_token);
+        config.headers = config.headers || {};
+        config.headers.Authorization = `Bearer ${data.access_token}`;
+        return api(config);
+      } catch (e) {
+        // Limpia tokens si no se puede refrescar
+        localStorage.removeItem("aura_access_token");
+        localStorage.removeItem("aura_refresh_token");
+        throw e;
+      }
+    }
+    throw error;
+  }
+);
 
 // --- Health ---
 export const ping = () => api.get("/ping");
