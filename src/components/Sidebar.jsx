@@ -141,24 +141,9 @@ export default function Sidebar({ onSelect }) {
 
       {/* Heading and messages (non-scrollable) */}
       <div className="px-3">
-        {!collapsed && (
-          <div className="grid grid-cols-[56px_auto] items-center gap-x-1 mb-2">
-            <div />
-            <h3 className="text-[#33AACD] text-base font-semibold">Chats</h3>
-          </div>
-        )}
-        {!collapsed && loading && (
-          <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
-            <div />
-            <p className="text-gray-400 text-base">Cargando...</p>
-          </div>
-        )}
-        {!collapsed && error && (
-          <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
-            <div />
-            <p className="text-red-400 text-base">{error}</p>
-          </div>
-        )}
+        {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-14">Chats</h3>}
+        {!collapsed && loading && <p className="text-gray-400 text-base pl-14">Cargando...</p>}
+        {!collapsed && error && <p className="text-red-400 text-base pl-14">{error}</p>}
       </div>
 
       {/* Only the list scrolls */}
@@ -166,25 +151,18 @@ export default function Sidebar({ onSelect }) {
         {!collapsed && !loading && !error && (
           <div className="space-y-1">
             {items.length === 0 && (
-              <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
-                <div />
-                <p className="text-gray-500 text-base">Aun no tienes chats.</p>
-              </div>
+              <p className="text-gray-500 text-base pl-14">Aun no tienes chats.</p>
             )}
-            {items.map((c, i) => {
-              return (
-                <div key={i} className="grid grid-cols-[56px_auto] items-center gap-x-1">
-                  <div />
-                  <button
-                    onClick={() => onSelect?.(c)}
-                    className="w-full text-left pr-2 py-2 text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
-                    title={c.title}
-                  >
-                    <span className="block truncate">{c.title || "Nuevo chat"}</span>
-                  </button>
-                </div>
-              )
-            })}
+            {items.map((c, i) => (
+              <button
+                key={i}
+                onClick={() => onSelect?.(c)}
+                className="w-full text-left pr-2 py-2 pl-14 text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
+                title={c.title}
+              >
+                <span className="block truncate">{c.title || "Nuevo chat"}</span>
+              </button>
+            ))}
           </div>
         )}
       </div>
