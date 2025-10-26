@@ -69,7 +69,7 @@ export default function Sidebar({ onSelect }) {
   const labelCell = "text-base text-left truncate"
 
   return (
-    <div className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all ${collapsed ? "w-20" : "w-80"}`}>
+    <div id="aura-sidebar" className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all ${collapsed ? "w-20" : "w-80"}`}>
       <div className="px-3 py-4 border-b border-white/10">
         <div className="grid grid-cols-[56px_auto_48px] items-center">
           {collapsed ? (

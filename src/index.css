@@ -11,6 +11,22 @@
   }
 }
 
+/* Sidebar polish (ChatGPT-like, Aura colors) */
+#aura-sidebar .overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+#aura-sidebar .overflow-y-auto::-webkit-scrollbar-track {
+  background: rgba(255,255,255,0.04);
+  border-radius: 8px;
+}
+#aura-sidebar .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.14);
+  border-radius: 8px;
+}
+#aura-sidebar .overflow-y-auto:hover::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.22);
+}
+
 /* (removed thinking dots animation) */
 /* Welcome prompt: helper text slightly smaller than heading, extra-light */
 .flex.flex-col.items-center.justify-center.py-10 > p {
