@@ -78,10 +78,10 @@ export const getMessages = ({ conversation_id, user_id } = {}) =>
   api.get("/chat/messages", { params: { ...(conversation_id ? { conversation_id } : {}), ...(user_id ? { user_id } : {}) } });
 
 // --- Chat orchestration ---
-export const chatAsk = (payload) => api.post("/chat/ask", payload);
+export const chatAsk = (payload, config = {}) => api.post("/chat/ask", payload, config);
 
 // --- Aura IA ---
-export const auraAsk = (payload) => api.post("/aura/ask", payload);
+export const auraAsk = (payload, config = {}) => api.post("/aura/ask", payload, config);
 
 export default api;
 // --- Auth ---

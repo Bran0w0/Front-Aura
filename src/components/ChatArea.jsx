@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react"
-import { FiMic, FiHelpCircle } from "react-icons/fi"
+import LogoAura from "./LogoAura"
+import ChatInput from "./ChatInput"
+import { FiHelpCircle } from "react-icons/fi"
 import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
 import { chatAsk, getMessages } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
@@ -12,6 +14,7 @@ export default function ChatArea({ selected }) {
   const [scrollerRef, setScrollerRef] = useState(null)
   const [containerEl, setContainerEl] = useState(null)
   const [dockRect, setDockRect] = useState({ left: 0, width: 0 })
+  const [abortCtrl, setAbortCtrl] = useState(null)
 
   const suggestions = [
     { icon: <PiForkKnifeBold className="w-4 h-4 text-yellow-300" />, text: "Llévame a McDoñas" },
@@ -45,8 +48,10 @@ export default function ChatArea({ selected }) {
     setMessages((m) => [...m, { role: "user", content: pregunta }])
     setText("")
     try {
+      const controller = new AbortController()
+      setAbortCtrl(controller)
       const uid = getUserInfo()?.id
-      const { data } = await chatAsk({ user_id: uid, content: pregunta, conversation_id: conversationId || null, create_if_missing: true })
+      const { data } = await chatAsk({ user_id: uid, content: pregunta, conversation_id: conversationId || null, create_if_missing: true }, { signal: controller.signal })
       const cid = data?.conversation_id
       if (cid && !conversationId) setConversationId(cid)
       const userMsg = data?.user_message
@@ -55,19 +60,19 @@ export default function ChatArea({ selected }) {
         try { window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: userMsg.content } })) } catch {}
       }
       setMessages((m) => [...m.filter(Boolean), { role: "assistant", content: asstMsg?.content || "Sin respuesta" }])
-    } catch {
-      setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
+    } catch (e) {
+      if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
+        // cancelado por el usuario: no agregamos mensaje de error
+      } else {
+        setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
+      }
     } finally {
       setLoading(false)
+      setAbortCtrl(null)
     }
   }
 
-  const onKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      sendQuestion()
-    }
-  }
+  // manejado dentro de ChatInput
 
   // Auto-scroll al final cuando llegan mensajes
   useEffect(() => {
@@ -88,15 +93,17 @@ export default function ChatArea({ selected }) {
     return () => window.removeEventListener('resize', update)
   }, [containerEl])
 
+  const handleStop = () => { try { abortCtrl?.abort?.() } catch {}; setLoading(false); setAbortCtrl(null) }
+
   return (
     <div ref={setContainerEl} className="flex-1 bg-[#040B17] flex flex-col min-h-0 relative">
       {/* Marca superior sutil */}
       <div className="px-6 pt-4 hidden md:block flex-shrink-0">
-        <span className="text-[#33AACD] text-xl font-semibold tracking-wide">aura</span>
+        <LogoAura className="h-10" colorClass="text-[#33AACD]" />
       </div>
 
       <div className="flex-1 overflow-y-auto min-h-0 pb-36" ref={setScrollerRef}>
-        <div className="w-full max-w-3xl mx-auto px-4 py-6">
+        <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {messages.map((m, i) => (
             m.role === "user" ? (
               <div key={i} className="flex justify-end mb-4">
@@ -118,31 +125,20 @@ export default function ChatArea({ selected }) {
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-10">
             <img src="/AURA.png" alt="Aura Robot" className="w-40 h-52 mb-6" />
-            <h1 className="text-3xl font-semibold text-white mb-2">
-              Hola! Soy <span className="font-semibold text-[#33AACD]">aura</span>
+            <h1 className="text-4xl font-semibold text-white mb-1">
+              Hola! Soy <span className="align-middle"><LogoAura className="inline-block h-[1.2em] align-middle" colorClass="text-[#33AACD]" /></span>
             </h1>
             <p className="text-xl text-gray-300 mb-8">¿En qué puedo ayudarte?</p>
 
-            <div className="w-full max-w-3xl mx-auto mb-8 px-4">
-              <div className="relative">
-                <input
-                  type="text"
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  placeholder="Pregunta lo que quieras"
-                  className="w-full bg-[#081A39] text-white rounded-full px-6 py-4 pr-14 text-base placeholder-gray-300 border border-transparent focus:outline-none focus:ring-2 focus:ring-[#33AACD]"
-                  disabled={loading}
-                />
-                <button
-                  onClick={() => sendQuestion()}
-                  disabled={loading || !text.trim()}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-60"
-                  title="Enviar"
-                >
-                  <FiMic className="w-4 h-4 text-gray-800" />
-                </button>
-              </div>
+            <div className="w-full max-w-4xl mx-auto mb-8 px-4">
+              <ChatInput
+                value={text}
+                onChange={(v) => setText(v)}
+                onSubmit={() => sendQuestion()}
+                onStop={handleStop}
+                loading={loading}
+                placeholder="Pregunta lo que quieras"
+              />
             </div>
 
             <div className="flex flex-wrap gap-4 justify-center">
@@ -164,26 +160,15 @@ export default function ChatArea({ selected }) {
       {/* Barra inferior para escribir cuando ya hay mensajes */}
       {messages.length > 0 && (
         <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 12, background: '#040B17' }}>
-          <div className="w-full max-w-3xl mx-auto px-4 pb-0 pt-2">
-            <div className="relative">
-              <input
-                type="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Escribe un mensaje"
-                className="w-full bg-[#081A39] text-white rounded-full px-6 py-4 pr-14 text-base placeholder-gray-300 border border-transparent focus:outline-none focus:ring-2 focus:ring-[#33AACD]"
-                disabled={loading}
-              />
-              <button
-                onClick={() => sendQuestion()}
-                disabled={loading || !text.trim()}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors disabled:opacity-60"
-                title="Enviar"
-              >
-                <FiMic className="w-4 h-4 text-gray-800" />
-              </button>
-            </div>
+          <div className="w-full max-w-4xl mx-auto px-4 pb-0 pt-2">
+            <ChatInput
+              value={text}
+              onChange={(v) => setText(v)}
+              onSubmit={() => sendQuestion()}
+              onStop={handleStop}
+              loading={loading}
+              placeholder="Escribe un mensaje"
+            />
             <p className="text-xs text-gray-400 text-center mt-2">AURA puede equivocarse. Trabajamos para que tengas la mejor asistente universitaria.</p>
           </div>
         </div>

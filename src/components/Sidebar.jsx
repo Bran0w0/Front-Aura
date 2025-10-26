@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { FiEdit, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
+import AuraHead from "./AuraHead"
 import { getConversations, createConversation, authMe } from "../lib/api"
 import { authLogout } from "../lib/api"
 import { clearTokens, getRefreshToken, getUserInfo, colorFromString, getSessionId } from "../lib/auth"
@@ -9,13 +10,14 @@ export default function Sidebar({ onSelect }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
 
   const user = getUserInfo()
   const [fullName, setFullName] = useState("")
-  const email = user?.email || "usuario@aura";
-  const initial = (email[0] || "U").toUpperCase();
-  const avatarBg = colorFromString(email);
+  const email = user?.email || "usuario@aura"
+  const initial = (email[0] || "U").toUpperCase()
+  const avatarBg = colorFromString(email)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,48 +43,70 @@ export default function Sidebar({ onSelect }) {
     fetchData()
   }, [])
 
-  // Escucha cambios de título enviados desde ChatArea para actualizar en caliente
   useEffect(() => {
     const onTitle = (e) => {
       const { id, title } = e.detail || {}
       if (!id || !title) return
-      setItems((prev) => {
-        const next = prev.map((it) => (it.conversation_id === id ? { ...it, title } : it))
-        return next
-      })
+      setItems((prev) => prev.map((it) => (it.conversation_id === id ? { ...it, title } : it)))
     }
     window.addEventListener("aura:conv-title", onTitle)
     return () => window.removeEventListener("aura:conv-title", onTitle)
   }, [])
 
-  // Cargar perfil del usuario para mostrar nombre si existe
   useEffect(() => {
     const loadMe = async () => {
       try {
         const { data } = await authMe()
         const name = data?.profile?.full_name || ""
         if (name) setFullName(name)
-      } catch {
-        // si falla, mantenemos email
-      }
+      } catch {}
     }
     if (user) loadMe()
   }, [user])
 
+  const rowBase = "grid grid-cols-[56px_auto] items-center gap-x-1 w-full h-12 px-0 hover:bg-white/5 rounded-2xl cursor-pointer"
+  const iconCell = "w-14 h-12 flex items-center justify-center"
+  const labelCell = "text-base text-left truncate"
+
   return (
-    <div className="w-80 bg-[#020710] text-white h-screen flex flex-col border-r border-white/10">
-      <div className="p-4 border-b border-white/10">
-        <div className="flex items-center justify-between">
-          <img src="/Cabeza AURA.png" alt="Aura" className="w-8 h-8" />
-          <button className="w-8 h-8 flex items-center justify-center hover:bg-white/5 rounded-lg transition-colors">
-            <FiSidebar className="w-5 h-5 text-gray-400" />
-          </button>
+    <div className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all ${collapsed ? "w-20" : "w-80"}`}>
+      <div className="px-3 py-4 border-b border-white/10">
+        <div className="grid grid-cols-[56px_auto_48px] items-center">
+          {collapsed ? (
+            <button
+              onClick={() => setCollapsed(false)}
+              className="group relative w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-ew-resize"
+              title="Expandir"
+            >
+              <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-0">
+                <AuraHead className="w-8 h-8" title="Aura" />
+              </span>
+              <FiSidebar className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
+            </button>
+          ) : (
+            <button
+              onClick={() => navigate('/home')}
+              className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer"
+              title="Inicio"
+            >
+              <AuraHead className="w-8 h-8" title="Aura" />
+            </button>
+          )}
+          <div />
+          {!collapsed && (
+            <button
+              onClick={() => setCollapsed(true)}
+              className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-ew-resize"
+              title="Colapsar"
+            >
+              <FiSidebar className="w-5 h-5 text-white" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
-        <button
-          className="flex items-center gap-3 w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors"
+      <div className="px-3 py-4 space-y-1">
+        <button className={`${rowBase}`}
           onClick={async () => {
             try {
               const uid = getUserInfo()?.id
@@ -94,42 +118,38 @@ export default function Sidebar({ onSelect }) {
                 setItems((prev) => [newItem, ...prev])
                 onSelect?.(newItem)
               } else {
-                // Modo invitado: limpia selección; la conversación se crea con /chat/ask al enviar
                 const newItem = { conversation_id: null, title: "Nuevo chat", updated_at: new Date().toISOString() }
                 setItems((prev) => [newItem, ...prev])
                 onSelect?.(newItem)
               }
-            } catch (e) {
-              // ignore
-            }
-          }}
-        >
-          <FiEdit className="w-5 h-5" /><span>Nuevo chat</span>
+            } catch {}
+          }}>
+          <span className={iconCell}><FiEdit className="w-5 h-5" /></span>
+          <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Nuevo chat</span>
         </button>
-        <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors">
-          <FiSearch className="w-5 h-5" /><span>Buscar chats</span>
+
+        <button className={`${rowBase}`}>
+          <span className={iconCell}><FiSearch className="w-5 h-5" /></span>
+          <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Buscar chats</span>
         </button>
-        <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors" onClick={() => navigate("/timetable")}>
-          <FiMapPin className="w-5 h-5" /><span>Ubícate</span>
+
+        <button className={`${rowBase}`} onClick={() => navigate("/timetable")}>
+          <span className={iconCell}><FiMapPin className="w-5 h-5" /></span>
+          <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Ubicate</span>
         </button>
       </div>
 
-      <div className="flex-1 px-4">
-        <h3 className="text-[#33AACD] text-sm font-medium mb-4">Chats</h3>
-        {loading && <p className="text-gray-400 text-sm">Cargando…</p>}
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        {!loading && !error && (
+      <div className="flex-1 px-4 min-h-0 overflow-y-auto">
+        {!collapsed && <h3 className="text-[#33AACD] text-sm font-medium mb-4">Chats</h3>}
+        {!collapsed && loading && <p className="text-gray-400 text-sm">Cargando...</p>}
+        {!collapsed && error && <p className="text-red-400 text-sm">{error}</p>}
+        {!collapsed && !loading && !error && (
           <div className="space-y-2">
-            {items.length === 0 && <p className="text-gray-500 text-sm">Aún no tienes chats.</p>}
+            {items.length === 0 && <p className="text-gray-500 text-sm">Aun no tienes chats.</p>}
             {items.map((c, i) => {
-              const preview = (c.title || "").length > 28 ? c.title.slice(0, 28) + "…" : c.title || "Nuevo chat"
+              const preview = (c.title || "").length > 28 ? `${c.title.slice(0, 28)}...` : c.title || "Nuevo chat"
               return (
-                <button
-                  key={i}
-                  onClick={() => onSelect?.(c)}
-                  className="w-full text-left p-2 text-gray-300 hover:bg-white/5 rounded-lg transition-colors text-sm"
-                  title={c.title}
-                >
+                <button key={i} onClick={() => onSelect?.(c)} className="w-full text-left p-2 text-gray-300 hover:bg-white/5 rounded-xl text-sm" title={c.title}>
                   {preview}
                 </button>
               )
@@ -138,35 +158,30 @@ export default function Sidebar({ onSelect }) {
         )}
       </div>
 
-      <div className="p-4 border-t border-white/10 space-y-3">
-        <button className="flex items-center gap-3 w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors">
-          <FiSettings className="w-5 h-5" /><span>Ajustes</span>
+      <div className="px-3 py-4 border-t border-white/10 space-y-1">
+        <button className={`${rowBase}`}>
+          <span className={iconCell}><FiSettings className="w-5 h-5" /></span>
+          <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Ajustes</span>
         </button>
-        <button
+        <button className={`${rowBase}`}
           onClick={async () => {
             const rt = getRefreshToken()
-            try {
-              if (rt) await authLogout({ refresh_token: rt })
-            } catch {
-              // ignora errores; de todas formas limpiaremos el estado local
-            } finally {
+            try { if (rt) await authLogout({ refresh_token: rt }) } catch {}
+            finally {
               clearTokens()
               navigate("/login", { replace: true })
             }
-          }}
-          className="flex items-center gap-3 w-full text-left p-2 hover:bg-white/5 rounded-lg transition-colors"
-        >
-          <FiLogOut className="w-5 h-5" /><span>Salir</span>
+          }}>
+          <span className={iconCell}><FiLogOut className="w-5 h-5" /></span>
+          <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Salir</span>
         </button>
         <div className="flex items-center gap-3 p-2">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}>
+          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: avatarBg }}>
             <span className="text-white text-sm font-medium">{initial}</span>
           </div>
-          <span className="text-sm truncate" title={fullName || email}>{fullName || email}</span>
+          {!collapsed && <span className="text-sm truncate" title={fullName || email}>{fullName || email}</span>}
         </div>
       </div>
     </div>
   )
 }
-
-
