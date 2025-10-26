@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { FiEdit, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
+import { HiMenuAlt2 } from "react-icons/hi"
 import AuraHead from "./AuraHead"
 import { getConversations, createConversation, authMe } from "../lib/api"
 import { authLogout } from "../lib/api"
@@ -11,6 +12,7 @@ export default function Sidebar({ onSelect }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const navigate = useNavigate()
 
   const user = getUserInfo()
@@ -69,7 +71,33 @@ export default function Sidebar({ onSelect }) {
   const labelCell = "text-base text-left truncate"
 
   return (
-    <div id="aura-sidebar" className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all ${collapsed ? "w-20" : "w-80"}`}>
+    <>
+      {/* Toggle button for small screens */}
+      <button
+        className="lg:hidden fixed top-4 left-3 z-40 w-14 h-12 flex items-center justify-center text-white hover:opacity-80"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menú"
+      >
+        <HiMenuAlt2 className="w-7 h-7" />
+      </button>
+
+      {/* Backdrop when open on mobile */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/50"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      <div
+        id="aura-sidebar"
+        className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all
+          ${collapsed ? "w-20" : "w-80"}
+          lg:static lg:translate-x-0 lg:z-0
+          fixed top-0 left-0 z-50 transform
+          ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
+        `}
+      >
       <div className="px-3 py-4 border-b border-white/10">
         <div className="grid grid-cols-[56px_auto_48px] items-center">
           {collapsed ? (
@@ -95,8 +123,8 @@ export default function Sidebar({ onSelect }) {
           <div />
           {!collapsed && (
             <button
-              onClick={() => setCollapsed(true)}
-              className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-ew-resize"
+              onClick={() => (window.innerWidth < 1024 ? setMobileOpen(false) : setCollapsed(true))}
+              className="w-12 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer"
               title="Colapsar"
             >
               <FiSidebar className="w-5 h-5 text-white" />
@@ -191,6 +219,7 @@ export default function Sidebar({ onSelect }) {
           {!collapsed && <span className="text-sm truncate" title={fullName || email}>{fullName || email}</span>}
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

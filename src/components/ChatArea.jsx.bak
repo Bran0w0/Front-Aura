@@ -62,7 +62,7 @@ export default function ChatArea({ selected }) {
       setMessages((m) => [...m.filter(Boolean), { role: "assistant", content: asstMsg?.content || "Sin respuesta" }])
     } catch (e) {
       if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
-        // cancelado por el usuario
+        // cancelado por el usuario: no agregamos mensaje de error
       } else {
         setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
       }
@@ -72,12 +72,16 @@ export default function ChatArea({ selected }) {
     }
   }
 
-  // auto-scroll
+  // manejado dentro de ChatInput
+
+  // Auto-scroll al final cuando llegan mensajes
   useEffect(() => {
-    try { if (scrollerRef) scrollerRef.scrollTop = scrollerRef.scrollHeight } catch {}
+    try {
+      if (scrollerRef) scrollerRef.scrollTop = scrollerRef.scrollHeight
+    } catch {}
   }, [messages, scrollerRef])
 
-  // sincroniza ancho del dock inferior
+  // Sincroniza el ancho del footer fijo con el ancho visible del ChatArea
   useEffect(() => {
     const update = () => {
       if (!containerEl) return
@@ -93,43 +97,43 @@ export default function ChatArea({ selected }) {
 
   return (
     <div ref={setContainerEl} className="flex-1 bg-[#040B17] flex flex-col min-h-0 relative">
-      {/* Header */}
+      {/* Encabezado: logo. En mobile aparece para compensar el botón flotante del sidebar */}
       <div className="px-6 pt-4 hidden md:block flex-shrink-0">
         <LogoAura className="h-10" colorClass="text-[#33AACD]" />
       </div>
-      <div className="block md:hidden sticky top-4 z-30 bg-[#040B17]">
-        <div className="h-12 flex items-center gap-5 pl-16">
-          <LogoAura className="h-8" colorClass="text-[#33AACD]" />
-        </div>
+      <div className="px-4 pt-4 block md:hidden flex-shrink-0">
+        <LogoAura className="h-8" colorClass="text-[#33AACD]" />
       </div>
 
-      {/* Scroll area (no scroll in mobile on empty state) */}
-      <div className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto' : 'overflow-y-auto'} flex-1 min-h-0 pb-36`} ref={setScrollerRef}>
+      <div className="flex-1 overflow-y-auto min-h-0 pb-36" ref={setScrollerRef}>
         <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {messages.map((m, i) => (
             m.role === "user" ? (
               <div key={i} className="flex justify-end mb-4">
-                <div className="inline-block bg-[#081A39] text-white rounded-full px-5 py-3 max-w-[80%]">{m.content}</div>
+                <div className="inline-block bg-[#081A39] text-white rounded-full px-5 py-3 max-w-[80%]">
+                  {m.content}
+                </div>
               </div>
             ) : (
               <div key={i} className="flex items-start gap-3 mb-6">
                 <img src="/AURA.png" alt="Aura" className="w-10 h-10" />
-                <div className="text-gray-100 text-lg leading-7">{m.content}</div>
+                <div className="text-gray-100 text-lg leading-7">
+                  {m.content}
+                </div>
               </div>
             )
           ))}
         </div>
-
+      
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-start md:justify-center py-6 md:py-10">
-            <img src="/AURA.png" alt="Aura Robot" className="w-36 h-48 md:w-40 md:h-52 mb-5 md:mb-6" />
-            <h1 className="text-3xl md:text-4xl font-semibold text-white mb-1">
+          <div className="flex flex-col items-center justify-center py-10">
+            <img src="/AURA.png" alt="Aura Robot" className="w-40 h-52 mb-6" />
+            <h1 className="text-4xl font-semibold text-white mb-1">
               Hola! Soy <span className="align-middle"><LogoAura className="inline-block h-[1.2em] align-middle" colorClass="text-[#33AACD]" /></span>
             </h1>
-            <p className="text-lg md:text-xl text-gray-300 mb-6 md:mb-8">¿En qué puedo ayudarte?</p>
+            <p className="text-xl text-gray-300 mb-8">¿En qué puedo ayudarte?</p>
 
-            {/* Input desktop en home (antes de conversar) */}
-            <div className="w-full max-w-4xl mx-auto mb-8 px-4 hidden md:block">
+            <div className="w-full max-w-4xl mx-auto mb-8 px-4">
               <ChatInput
                 value={text}
                 onChange={(v) => setText(v)}
@@ -142,7 +146,11 @@ export default function ChatArea({ selected }) {
 
             <div className="flex flex-wrap gap-4 justify-center">
               {suggestions.map((s, idx) => (
-                <button key={idx} onClick={() => sendQuestion(s.text)} className="flex items-center gap-2 text-white/90 px-4 py-2 rounded-full border border-[#223555] bg-transparent hover:bg-white/5 transition-colors">
+                <button
+                  key={idx}
+                  onClick={() => sendQuestion(s.text)}
+                  className="flex items-center gap-2 text-white/90 px-4 py-2 rounded-full border border-[#223555] bg-transparent hover:bg-white/5 transition-colors"
+                >
                   <span className="inline-flex items-center justify-center w-5 h-5">{s.icon}</span>
                   <span className="text-sm">{s.text}</span>
                 </button>
@@ -152,22 +160,22 @@ export default function ChatArea({ selected }) {
         )}
       </div>
 
-      {/* Barra inferior fija: en móvil siempre; en desktop solo con mensajes */}
-      <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 16, background: '#040B17' }} className={`${messages.length === 0 ? 'md:hidden' : ''}`}>
-        <div className="w-full max-w-4xl mx-auto px-4 pb-0 pt-2">
-          <ChatInput
-            value={text}
-            onChange={(v) => setText(v)}
-            onSubmit={() => sendQuestion()}
-            onStop={handleStop}
-            loading={loading}
-            placeholder={messages.length > 0 ? 'Escribe un mensaje' : 'Pregunta lo que quieras'}
-          />
-          {messages.length > 0 && (
-            <p className="hidden md:block text-xs text-gray-400 text-center mt-2">AURA puede equivocarse. Trabajamos para que tengas la mejor asistente universitaria.</p>
-          )}
+      {/* Barra inferior para escribir cuando ya hay mensajes */}
+      {messages.length > 0 && (
+        <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 12, background: '#040B17' }}>
+          <div className="w-full max-w-4xl mx-auto px-4 pb-0 pt-2">
+            <ChatInput
+              value={text}
+              onChange={(v) => setText(v)}
+              onSubmit={() => sendQuestion()}
+              onStop={handleStop}
+              loading={loading}
+              placeholder="Escribe un mensaje"
+            />
+            <p className="text-xs text-gray-400 text-center mt-2">AURA puede equivocarse. Trabajamos para que tengas la mejor asistente universitaria.</p>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
