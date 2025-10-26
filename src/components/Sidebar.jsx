@@ -139,17 +139,27 @@ export default function Sidebar({ onSelect }) {
         </button>
       </div>
 
-      <div className="flex-1 px-4 min-h-0 overflow-y-auto">
-        {!collapsed && <h3 className="text-[#33AACD] text-sm font-medium mb-4">Chats</h3>}
-        {!collapsed && loading && <p className="text-gray-400 text-sm">Cargando...</p>}
-        {!collapsed && error && <p className="text-red-400 text-sm">{error}</p>}
+      {/* Heading and messages (non-scrollable) */}
+      <div className="px-3">
+        {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[60px]">Chats</h3>}
+        {!collapsed && loading && <p className="text-gray-400 text-base pl-[60px]">Cargando...</p>}
+        {!collapsed && error && <p className="text-red-400 text-base pl-[60px]">{error}</p>}
+      </div>
+
+      {/* Only the list scrolls */}
+      <div className="flex-1 min-h-0 overflow-y-auto px-3">
         {!collapsed && !loading && !error && (
-          <div className="space-y-2">
-            {items.length === 0 && <p className="text-gray-500 text-sm">Aun no tienes chats.</p>}
+          <div className="space-y-1">
+            {items.length === 0 && <p className="text-gray-500 text-base pl-[60px]">Aun no tienes chats.</p>}
             {items.map((c, i) => {
               const preview = (c.title || "").length > 28 ? `${c.title.slice(0, 28)}...` : c.title || "Nuevo chat"
               return (
-                <button key={i} onClick={() => onSelect?.(c)} className="w-full text-left p-2 text-gray-300 hover:bg-white/5 rounded-xl text-sm" title={c.title}>
+                <button
+                  key={i}
+                  onClick={() => onSelect?.(c)}
+                  className="w-full text-left pr-2 py-2 pl-[60px] text-gray-300 hover:bg-white/5 rounded-xl text-base"
+                  title={c.title}
+                >
                   {preview}
                 </button>
               )
