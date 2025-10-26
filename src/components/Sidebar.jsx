@@ -142,19 +142,19 @@ export default function Sidebar({ onSelect }) {
       {/* Heading and messages (non-scrollable) */}
       <div className="px-3">
         {!collapsed && (
-          <div className="grid grid-cols-[56px_auto] items-center mb-2">
+          <div className="grid grid-cols-[56px_auto] items-center gap-x-1 mb-2">
             <div />
             <h3 className="text-[#33AACD] text-base font-semibold">Chats</h3>
           </div>
         )}
         {!collapsed && loading && (
-          <div className="grid grid-cols-[56px_auto] items-center">
+          <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
             <div />
             <p className="text-gray-400 text-base">Cargando...</p>
           </div>
         )}
         {!collapsed && error && (
-          <div className="grid grid-cols-[56px_auto] items-center">
+          <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
             <div />
             <p className="text-red-400 text-base">{error}</p>
           </div>
@@ -166,14 +166,14 @@ export default function Sidebar({ onSelect }) {
         {!collapsed && !loading && !error && (
           <div className="space-y-1">
             {items.length === 0 && (
-              <div className="grid grid-cols-[56px_auto] items-center">
+              <div className="grid grid-cols-[56px_auto] items-center gap-x-1">
                 <div />
                 <p className="text-gray-500 text-base">Aun no tienes chats.</p>
               </div>
             )}
             {items.map((c, i) => {
               return (
-                <div key={i} className="grid grid-cols-[56px_auto] items-center">
+                <div key={i} className="grid grid-cols-[56px_auto] items-center gap-x-1">
                   <div />
                   <button
                     onClick={() => onSelect?.(c)}
