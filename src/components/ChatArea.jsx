@@ -72,12 +72,10 @@ export default function ChatArea({ selected }) {
     }
   }
 
-  // auto-scroll
   useEffect(() => {
     try { if (scrollerRef) scrollerRef.scrollTop = scrollerRef.scrollHeight } catch {}
   }, [messages, scrollerRef])
 
-  // sincroniza ancho del dock inferior
   useEffect(() => {
     const update = () => {
       if (!containerEl) return
@@ -97,14 +95,17 @@ export default function ChatArea({ selected }) {
       <div className="px-6 pt-4 hidden md:block flex-shrink-0">
         <LogoAura className="h-10" colorClass="text-[#33AACD]" />
       </div>
-      <div className="block md:hidden sticky top-4 z-30 bg-[#040B17]">
+      <div className="block md:hidden sticky top-0 z-30 bg-[#040B17] pt-4">
         <div className="h-12 flex items-center gap-5 pl-16">
           <LogoAura className="h-8" colorClass="text-[#33AACD]" />
         </div>
       </div>
 
       {/* Scroll area (no scroll in mobile on empty state) */}
-      <div className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto' : 'overflow-y-auto'} flex-1 min-h-0 pb-36`} ref={setScrollerRef}>
+      <div
+        className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0`}
+        ref={setScrollerRef}
+      >
         <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {messages.map((m, i) => (
             m.role === "user" ? (
@@ -152,8 +153,23 @@ export default function ChatArea({ selected }) {
         )}
       </div>
 
+      {/* Cortina inferior para ocultar contenido debajo del input (estilo ChatGPT) */}
+      {messages.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            left: dockRect.left,
+            width: dockRect.width,
+            bottom: 0,
+            height: 72,
+            pointerEvents: 'none',
+            background: 'linear-gradient(to top, rgba(4,11,23,1) 60%, rgba(4,11,23,0) 100%)',
+          }}
+        />
+      )}
+
       {/* Barra inferior fija: en móvil siempre; en desktop solo con mensajes */}
-      <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 16, background: '#040B17' }} className={`${messages.length === 0 ? 'md:hidden' : ''}`}>
+      <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 16 }} className={`z-50 ${messages.length === 0 ? 'md:hidden' : ''}`}>
         <div className="w-full max-w-4xl mx-auto px-4 pb-0 pt-2">
           <ChatInput
             value={text}
@@ -171,3 +187,4 @@ export default function ChatArea({ selected }) {
     </div>
   )
 }
+

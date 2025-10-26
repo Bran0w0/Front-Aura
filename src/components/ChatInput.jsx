@@ -1,4 +1,4 @@
-import React from "react"
+﻿import React from "react"
 import { ImArrowUp2 } from "react-icons/im"
 import { IoSquareSharp } from "react-icons/io5"
 import { PiMicrophoneBold } from "react-icons/pi"
@@ -36,19 +36,19 @@ export default function ChatInput({
       <button
         type="button"
         title="Dictar"
-        className={`absolute top-1/2 -translate-y-1/2 rounded-full cursor-pointer flex items-center justify-center text-white/90 hover:bg-white/10 transition-all duration-200 ease-out ${textPresent ? "right-16 w-11 h-11 opacity-100" : "right-3 w-11 h-11 opacity-0 pointer-events-none"}`}
+        className={`absolute top-1/2 -translate-y-1/2 rounded-full cursor-pointer flex items-center justify-center text-white/90 bg-white/10 md:bg-transparent md:hover:bg-white/10 transition-all duration-200 ease-out ${textPresent ? "right-16 w-11 h-11 opacity-100" : "right-3 w-11 h-11 opacity-0 pointer-events-none"}`}
       >
         <PiMicrophoneBold className="w-5 h-5 block" />
       </button>
 
-      {/* Botón principal: mic (vacío) -> flecha (texto) -> stop (loading) */}
+      {/* BotÃ³n principal: mic (vacÃ­o) -> flecha (texto) -> stop (loading) */}
       <button
         onClick={() => {
           if (loading) onStop?.()
           else if (textPresent) onSubmit?.()
         }}
         className="absolute right-3 top-1/2 -translate-y-1/2 w-11 h-11 bg-white rounded-full cursor-pointer disabled:cursor-default flex items-center justify-center hover:bg-gray-100 transition-colors"
-        title={loading ? "Detener" : textPresent ? "Enviar" : "Micrófono"}
+        title={loading ? "Detener" : textPresent ? "Enviar" : "MicrÃ³fono"}
       >
         <span className="relative inline-block w-5 h-5">
           <ImArrowUp2 className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-5 h-5 text-gray-800 transition-opacity duration-150 ease-out ${textPresent && !loading ? 'opacity-100' : 'opacity-0'}`} />
@@ -59,4 +59,5 @@ export default function ChatInput({
     </div>
   )
 }
+
 
