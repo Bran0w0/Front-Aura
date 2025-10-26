@@ -141,9 +141,9 @@ export default function Sidebar({ onSelect }) {
 
       {/* Heading and messages (non-scrollable) */}
       <div className="px-3">
-        {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-14">Chats</h3>}
-        {!collapsed && loading && <p className="text-gray-400 text-base pl-14">Cargando...</p>}
-        {!collapsed && error && <p className="text-red-400 text-base pl-14">{error}</p>}
+        {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[18px]">Chats</h3>}
+        {!collapsed && loading && <p className="text-gray-400 text-base pl-[18px]">Cargando...</p>}
+        {!collapsed && error && <p className="text-red-400 text-base pl-[18px]">{error}</p>}
       </div>
 
       {/* Only the list scrolls */}
@@ -151,13 +151,13 @@ export default function Sidebar({ onSelect }) {
         {!collapsed && !loading && !error && (
           <div className="space-y-1">
             {items.length === 0 && (
-              <p className="text-gray-500 text-base pl-14">Aun no tienes chats.</p>
+              <p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>
             )}
             {items.map((c, i) => (
               <button
                 key={i}
                 onClick={() => onSelect?.(c)}
-                className="w-full text-left pr-2 py-2 pl-14 text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
+                className="w-full text-left pr-2 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
                 title={c.title}
               >
                 <span className="block truncate">{c.title || "Nuevo chat"}</span>
