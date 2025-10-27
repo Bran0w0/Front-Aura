@@ -106,7 +106,7 @@ export default function Sidebar({ onSelect }) {
                 <FiSidebar className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
               </button>
             ) : (
-              <button onClick={() => navigate('/home')} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors" title="Inicio">
+              <button onClick={() => { user ? navigate('/home') : navigate('/') }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors" title="Inicio">
                 <AuraHead className="w-8 h-8" title="Aura" />
               </button>
             )}

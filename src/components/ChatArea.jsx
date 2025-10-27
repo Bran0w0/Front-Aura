@@ -112,7 +112,7 @@ export default function ChatArea({ selected }) {
               <div key={i} className="flex justify-end mb-4">
                 <div className={`inline-block bg-[#081A39] text-white px-5 py-3 max-w-[80%] ${(() => {
                   const t = (m.content || "").toString();
-                  return t.includes("\n") || t.length > 48 ? "rounded-2xl" : "rounded-full";
+                  return t.includes("\n") || t.length > 48 ? "rounded-3xl" : "rounded-full";
                 })()}`}>{m.content}</div>
               </div>
             ) : (
