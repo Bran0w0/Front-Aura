@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from "react"
-import { FiEdit, FiSearch, FiMapPin, FiSettings, FiSidebar, FiLogOut } from "react-icons/fi"
+import { FiEdit, FiSearch, FiMapPin, FiSidebar, FiLogOut } from "react-icons/fi"
 import { HiMenuAlt2 } from "react-icons/hi"
 import { IoClose } from "react-icons/io5"
 import AuraHead from "./AuraHead"
@@ -137,7 +137,7 @@ export default function Sidebar({ onSelect }) {
                   onSelect?.(newItem)
                 }
               } catch {}
-            }}>
+             if (window.innerWidth < 1024) setMobileOpen(false);}}>
             <span className={iconCell}><FiEdit className="w-5 h-5" /></span>
             <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Nuevo chat</span>
           </button>
@@ -147,7 +147,7 @@ export default function Sidebar({ onSelect }) {
             <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Buscar chats</span>
           </button>
 
-          <button className={`${rowBase}`} onClick={() => navigate("/timetable")}>
+          <button className={`${rowBase}`} onClick={() => { navigate("/timetable"); if (window.innerWidth < 1024) setMobileOpen(false); }}>
             <span className={iconCell}><FiMapPin className="w-5 h-5" /></span>
             <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Ubicate</span>
           </button>
@@ -172,10 +172,7 @@ export default function Sidebar({ onSelect }) {
         </div>
 
         <div className="px-3 py-4 border-t border-white/10 space-y-1">
-          <button className={`${rowBase}`}>
-            <span className={iconCell}><FiSettings className="w-5 h-5" /></span>
-            <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Ajustes</span>
-          </button>
+          
           <button className={`${rowBase}`}
             onClick={async () => {
               const rt = getRefreshToken()
@@ -184,7 +181,7 @@ export default function Sidebar({ onSelect }) {
                 clearTokens()
                 navigate("/login", { replace: true })
               }
-            }}>
+             if (window.innerWidth < 1024) setMobileOpen(false);}}>
             <span className={iconCell}><FiLogOut className="w-5 h-5" /></span>
             <span className={`${labelCell} ${collapsed ? "opacity-0" : ""}`}>Salir</span>
           </button>
@@ -199,5 +196,10 @@ export default function Sidebar({ onSelect }) {
     </>
   )
 }
+
+
+
+
+
 
 
