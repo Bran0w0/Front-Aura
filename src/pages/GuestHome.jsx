@@ -16,7 +16,7 @@ export default function GuestHome() {
 
         {/* Aviso flotante para invitados - desktop como antes; móvil full-width fixed */}
         {showBanner && (
-          <div className="fixed top-16 left-0 right-0 z-30 px-3 sm:absolute sm:top-4 sm:left-1/2 sm:-translate-x-1/2 sm:px-0">
+          <div className="fixed top-16 left-0 right-0 z-60 px-3 sm:absolute sm:top-4 sm:left-1/2 sm:-translate-x-1/2 sm:px-0">
             <div className="flex flex-col sm:inline-flex sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 rounded-2xl border border-white/10 bg-white/5 text-[#6ACCFF] text-sm px-3 py-2 shadow-lg backdrop-blur-sm max-w-[900px] w-full sm:w-auto mx-auto">
               <span className="text-center sm:text-left sm:whitespace-nowrap">Estás usando Aura en modo invitado. Algunas funciones requieren iniciar sesión.</span>
               <div className="flex gap-2 sm:gap-3 justify-center sm:justify-start">

@@ -154,7 +154,7 @@ export default function Sidebar({ onSelect }) {
         </div>
 
         {/* Encabezado fijo (no hace scroll) */}
-        <div className="px-3">
+        <div className="px-3 pt-2">
           {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[18px]">Chats</h3>}
           {!collapsed && loading && <p className="text-gray-400 text-base pl-[18px]">Cargando...</p>}
           {!collapsed && error && <p className="text-red-400 text-base pl-[18px]">{error}</p>}
