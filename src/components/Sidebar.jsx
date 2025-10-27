@@ -100,13 +100,24 @@ export default function Sidebar({ onSelect }) {
           <div className="grid grid-cols-[56px_auto_48px] items-center">
             {collapsed ? (
               <button onClick={() => setCollapsed(false)} className="group relative w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors lg:cursor-ew-resize" title="Expandir">
-                <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-0">
+                <span
+                  className="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-0 cursor-pointer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof window !== 'undefined' && window.innerWidth < 1024) setMobileOpen(false)
+                    navigate("/")
+                  }}
+                  title="Inicio"
+                  aria-label="Ir al inicio"
+                  role="button"
+                >
                   <AuraHead className="w-8 h-8" title="Aura" />
                 </span>
                 <FiSidebar className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
               </button>
             ) : (
-              <button onClick={() => navigate("/")} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors" title="Inicio">
+              <button onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false); navigate("/") }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors" title="Inicio">
                 <AuraHead className="w-8 h-8" title="Aura" />
               </button>
             )}
