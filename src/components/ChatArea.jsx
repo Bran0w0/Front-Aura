@@ -110,7 +110,10 @@ export default function ChatArea({ selected }) {
           {messages.map((m, i) => (
             m.role === "user" ? (
               <div key={i} className="flex justify-end mb-4">
-                <div className="inline-block bg-[#081A39] text-white rounded-full px-5 py-3 max-w-[80%]">{m.content}</div>
+                <div className={`inline-block bg-[#081A39] text-white px-5 py-3 max-w-[80%] ${(() => {
+                  const t = (m.content || "").toString();
+                  return t.includes("\n") || t.length > 48 ? "rounded-2xl" : "rounded-full";
+                })()}`}>{m.content}</div>
               </div>
             ) : (
               <div key={i} className="flex items-start gap-3 mb-6">
@@ -187,4 +190,3 @@ export default function ChatArea({ selected }) {
     </div>
   )
 }
-
