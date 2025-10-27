@@ -163,7 +163,7 @@ export default function Sidebar({ onSelect }) {
                 <p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>
               )}
               {items.map((c, i) => (
-                <button key={i} onClick={() => onSelect?.(c)} className="w-full text-left pr-2 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden" title={c.title}>
+                <button key={i} onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }} className="w-full text-left pr-2 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden" title={c.title}>
                   <span className="block truncate">{c.title || "Nuevo chat"}</span>
                 </button>
               ))}
@@ -196,6 +196,7 @@ export default function Sidebar({ onSelect }) {
     </>
   )
 }
+
 
 
 
