@@ -96,17 +96,17 @@ export default function Sidebar({ onSelect }) {
           ${mobileOpen ? "translate-x-0" : "-translate-x-full"}
         `}
       >
-        <div className="px-3 py-4 border-b border-white/10">
-          <div className="grid grid-cols-[56px_auto_48px] items-center">
+        <div className="px-3 h-[72px] border-b border-white/10">
+          <div className="grid grid-cols-[56px_auto_48px] items-center py-3">
             {collapsed ? (
-              <button onClick={() => setCollapsed(false)} className="group relative w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors lg:cursor-ew-resize" title="Expandir">
+              <button onClick={() => setCollapsed(false)} className="group relative w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer lg:cursor-ew-resize" title="Expandir">
                 <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover:opacity-0">
                   <AuraHead className="w-8 h-8" title="Aura" />
                 </span>
                 <FiSidebar className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
               </button>
             ) : (
-              <button onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false); const token = getAccessToken(); navigate(token ? "/home" : "/") }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors" title="Inicio">
+              <button onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false); const token = getAccessToken(); navigate(token ? "/home" : "/") }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer" title="Inicio">
                 <AuraHead className="w-8 h-8" title="Aura" />
               </button>
             )}
@@ -119,7 +119,7 @@ export default function Sidebar({ onSelect }) {
           </div>
         </div>
 
-        <div className="px-3 py-4 space-y-1">
+        <div className="px-3 pt-4 pb-2 space-y-1">
           <button className={`${rowBase}`}
             onClick={async () => {
               try {

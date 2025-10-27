@@ -84,28 +84,40 @@ export default function ChatArea({ selected }) {
     }
     update()
     window.addEventListener('resize', update)
-    return () => window.removeEventListener('resize', update)
+    let ro
+    try {
+      ro = new ResizeObserver(() => update())
+      if (containerEl) ro.observe(containerEl)
+    } catch {}
+    return () => {
+      window.removeEventListener('resize', update)
+      try { ro?.disconnect?.() } catch {}
+    }
   }, [containerEl])
 
   const handleStop = () => { try { abortCtrl?.abort?.() } catch {}; setLoading(false); setAbortCtrl(null) }
 
   return (
     <div ref={setContainerEl} className="flex-1 bg-[#040B17] flex flex-col min-h-0 relative overflow-x-hidden">
-      {/* Header */}
-      <div className="px-6 pt-4 hidden md:block flex-shrink-0">
-        <LogoAura className="h-10" colorClass="text-[#33AACD]" />
-      </div>
-      <div className="block md:hidden sticky top-0 z-30 bg-[#040B17] pt-4">
-        <div className="h-12 flex items-center gap-5 pl-16">
-          <LogoAura className="h-8" colorClass="text-[#33AACD]" />
-        </div>
-      </div>
+      {/* Header se vuelve sticky dentro del área scrolleable */}
 
       {/* Scroll area (no scroll in mobile on empty state) */}
       <div
-        className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0`}
+        className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0 pt-[72px]`}
         ref={setScrollerRef}
       >
+        {/* Fixed header aligned to chat container with solid background */}
+        <div
+          style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, top: 'max(env(safe-area-inset-top), 0px)' }}
+          className="z-40"
+        >
+          <div className="relative h-[72px] bg-[#040B17]">
+            {/* Fila posicionada exactamente como el botón móvil: top-4, h-12 */}
+            <div className="absolute inset-x-0 top-4 h-12 flex items-center pl-[80px] md:pl-6 pr-4">
+              <LogoAura className="h-10" colorClass="text-[#33AACD]" />
+            </div>
+          </div>
+        </div>
         <div className="w-full max-w-4xl mx-auto px-4 py-6">
           {messages.map((m, i) => (
             m.role === "user" ? (
@@ -128,7 +140,7 @@ export default function ChatArea({ selected }) {
           <div className="flex flex-col items-center justify-start md:justify-center py-6 md:py-10">
             <img src="/AURA.png" alt="Aura Robot" className="w-36 h-48 md:w-40 md:h-52 mb-5 md:mb-6" />
             <h1 className="text-3xl md:text-4xl font-semibold text-white mb-1">
-              Hola! Soy <span className="align-middle"><LogoAura className="inline-block h-[1.2em] align-middle" colorClass="text-[#33AACD]" /></span>
+              Hola! Soy <span className="align-middle"><LogoAura className="inline-block h-10 md:h-[1.2em] align-middle" colorClass="text-[#33AACD]" /></span>
             </h1>
             <p className="text-lg md:text-xl text-gray-300 mb-6 md:mb-8">¿En qué puedo ayudarte?</p>
 
