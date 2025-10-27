@@ -153,7 +153,7 @@ export default function Sidebar({ onSelect }) {
           </button>
         </div>
 
-        <div className="flex-1 px-3">
+        <div className="flex-1 min-h-0 overflow-y-auto px-3">
           {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[18px]">Chats</h3>}
           {!collapsed && loading && <p className="text-gray-400 text-base pl-[18px]">Cargando...</p>}
           {!collapsed && error && <p className="text-red-400 text-base pl-[18px]">{error}</p>}
