@@ -31,6 +31,12 @@
   background: rgba(255,255,255,0.22);
 }
 
+/* Mejora de scroll en panel lateral y respeta zona segura */
+#aura-sidebar .overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
 /* (removed thinking dots animation) */
 /* Welcome prompt: helper text slightly smaller than heading, extra-light */
 .flex.flex-col.items-center.justify-center.py-10 > p {
