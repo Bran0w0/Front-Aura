@@ -90,7 +90,7 @@ export default function ChatArea({ selected }) {
   const handleStop = () => { try { abortCtrl?.abort?.() } catch {}; setLoading(false); setAbortCtrl(null) }
 
   return (
-    <div ref={setContainerEl} className="flex-1 bg-[#040B17] flex flex-col min-h-0 relative">
+    <div ref={setContainerEl} className="flex-1 bg-[#040B17] flex flex-col min-h-0 relative overflow-x-hidden">
       {/* Header */}
       <div className="px-6 pt-4 hidden md:block flex-shrink-0">
         <LogoAura className="h-10" colorClass="text-[#33AACD]" />
@@ -172,7 +172,7 @@ export default function ChatArea({ selected }) {
       )}
 
       {/* Barra inferior fija: en móvil siempre; en desktop solo con mensajes */}
-      <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 16 }} className={`z-50 ${messages.length === 0 ? 'md:hidden' : ''}`}>
+      <div style={{ position: 'fixed', left: dockRect.left, width: dockRect.width, bottom: 'max(env(safe-area-inset-bottom), 16px)' }} className={`z-50 ${messages.length === 0 ? 'md:hidden' : ''}`}>
         <div className="w-full max-w-4xl mx-auto px-4 pb-0 pt-2">
           <ChatInput
             value={text}

@@ -6,7 +6,7 @@ export default function Home() {
   const [selected, setSelected] = useState(null)
 
   return (
-    <div className="flex h-screen bg-[#040B17]">
+    <div className="flex min-h-[100dvh] bg-[#040B17] overflow-x-hidden">
       <Sidebar onSelect={(item) => setSelected(item)} />
       <ChatArea selected={selected} />
     </div>

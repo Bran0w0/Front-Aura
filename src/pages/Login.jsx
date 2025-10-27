@@ -89,7 +89,7 @@ export default function Login({ onAuth }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#040B17] text-white p-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[#040B17] text-white p-4 overflow-x-hidden">
       <div className="w-full max-w-xl bg-gray-900 border border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
         <div className="text-center space-y-1">
           <h1 className="text-3xl font-bold tracking-tight text-white">Iniciar Sesión</h1>

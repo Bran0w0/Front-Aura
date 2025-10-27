@@ -8,7 +8,7 @@ export default function GuestHome() {
   const [showBanner, setShowBanner] = useState(true);
   const navigate = useNavigate();
   return (
-    <div className="flex h-screen bg-[#040B17]">
+    <div className="flex min-h-[100dvh] bg-[#040B17] overflow-x-hidden">
       <Sidebar onSelect={(item) => setSelected(item)} />
       <div className="flex-1 relative">
         {/* Área de chat */}
@@ -30,4 +30,3 @@ export default function GuestHome() {
     </div>
   );
 }
-

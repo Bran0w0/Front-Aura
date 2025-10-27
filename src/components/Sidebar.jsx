@@ -89,7 +89,7 @@ export default function Sidebar({ onSelect }) {
       {/* Panel */}
       <div
         id="aura-sidebar"
-        className={`bg-[#020710] text-white h-screen flex flex-col border-r border-white/10 transition-all
+        className={`bg-[#020710] text-white min-h-[100dvh] flex flex-col border-r border-white/10 transition-all
           ${collapsed ? "w-20" : "w-80"}
           lg:static lg:translate-x-0 lg:z-0
           fixed top-0 left-0 z-80 transform
