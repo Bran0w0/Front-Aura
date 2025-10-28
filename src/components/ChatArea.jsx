@@ -3,7 +3,7 @@ import LogoAura from "./LogoAura"
 import ChatInput from "./ChatInput"
 import { FiHelpCircle } from "react-icons/fi"
 import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
-import { chatAsk, getMessages } from "../lib/api"
+import { chatAsk, getMessages, API_BASE } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
 export default function ChatArea({ selected }) {
@@ -32,7 +32,7 @@ export default function ChatArea({ selected }) {
       setConversationId(selected.conversation_id)
       try {
         const { data } = await getMessages({ conversation_id: selected.conversation_id })
-        const msgs = (data?.messages || []).map((m) => ({ role: m.role, content: m.content }))
+        const msgs = (data?.messages || []).map((m) => ({ role: m.role, content: m.content, attachments: m.attachments || [] }))
         setMessages(msgs)
       } catch {
         setMessages([])
@@ -59,7 +59,10 @@ export default function ChatArea({ selected }) {
       if (userMsg?.content && !messages.find((m) => m.content === userMsg.content)) {
         try { window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: userMsg.content } })) } catch {}
       }
-      setMessages((m) => [...m.filter(Boolean), { role: "assistant", content: asstMsg?.content || "Sin respuesta" }])
+      setMessages((m) => [
+        ...m.filter(Boolean),
+        { role: "assistant", content: asstMsg?.content || "Sin respuesta", attachments: asstMsg?.attachments || [] },
+      ])
     } catch (e) {
       if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
         // cancelado por el usuario
@@ -130,7 +133,45 @@ export default function ChatArea({ selected }) {
             ) : (
               <div key={i} className="flex items-start gap-3 mb-6">
                 <img src="/AURA.png" alt="Aura" className="w-10 h-10" />
-                <div className="text-gray-100 text-lg leading-7">{m.content}</div>
+                <div className="text-gray-100 text-lg leading-7">
+                  <div className="whitespace-pre-wrap">{sanitizeContent(m.content, m.attachments)}</div>
+                  {Array.isArray(m.attachments) && m.attachments.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-3">
+                      {m.attachments.map((u, idx) => {
+                        const isImg = /\.(png|jpe?g|webp|gif)$/i.test(u)
+                        const isPdf = /\.pdf($|\?)/i.test(u)
+                        const downloadUrl = `${API_BASE}/library/download?u=${encodeURIComponent(u)}`
+                        return (
+                          <div key={idx} className="border border-[#1a2a44] rounded-md p-2 bg-[#0b1426] max-w-sm">
+                            {isImg ? (
+                              <img src={u} alt="adjunto" className="max-h-64 max-w-full rounded" />
+                            ) : isPdf ? (
+                              <div className="text-sm text-gray-200">PDF adjunto</div>
+                            ) : (
+                              <div className="text-sm text-gray-200">Archivo</div>
+                            )}
+                            <div className="mt-2 flex gap-2">
+                              <a
+                                href={u}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-sky-300 hover:underline"
+                              >
+                                Ver
+                              </a>
+                              <a
+                                href={downloadUrl}
+                                className="text-xs text-gray-300 hover:underline"
+                              >
+                                Descargar
+                              </a>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )
           ))}
@@ -201,4 +242,26 @@ export default function ChatArea({ selected }) {
       </div>
     </div>
   )
+}
+
+function sanitizeContent(text, attachments) {
+  let s = (text || "").toString()
+  // Si hay adjuntos, oculta URLs crudas y líneas de "Descargar/Ver"
+  if (attachments && attachments.length > 0) {
+    try {
+      // Quita líneas que contengan alguna URL adjunta
+      const lines = s.split(/\n+/)
+      const cleaned = lines.filter((ln) => {
+        const hasUrl = (attachments || []).some((u) => ln.includes(u))
+        if (hasUrl) return false
+        const lower = ln.trim().toLowerCase()
+        if (lower.startsWith("descargar/ver") || lower.startsWith("descargar:") || lower.startsWith("ver:")) return false
+        // Quita líneas que parezcan URLs sueltas
+        if (/https?:\/\//i.test(lower) && lower.length > 20) return false
+        return true
+      })
+      s = cleaned.join("\n").trim()
+    } catch {}
+  }
+  return s
 }

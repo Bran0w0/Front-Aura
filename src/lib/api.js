@@ -8,6 +8,8 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+export const API_BASE = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api");
+
 // Adjunta Authorization si existe access_token
 api.interceptors.request.use((config) => {
   const t = localStorage.getItem("aura_access_token");
