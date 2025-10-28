@@ -15,6 +15,7 @@ export default function ChatArea({ selected }) {
   const [containerEl, setContainerEl] = useState(null)
   const [dockRect, setDockRect] = useState({ left: 0, width: 0 })
   const [abortCtrl, setAbortCtrl] = useState(null)
+  const [previewImg, setPreviewImg] = useState(null)
 
   const suggestions = [
     { icon: <PiForkKnifeBold className="w-4 h-4 text-yellow-300" />, text: "Llévame a McDoñas" },
@@ -142,23 +143,36 @@ export default function ChatArea({ selected }) {
                         const isPdf = /\.pdf($|\?)/i.test(u)
                         const downloadUrl = `${API_BASE}/library/download?u=${encodeURIComponent(u)}`
                         return (
-                          <div key={idx} className="border border-[#1a2a44] rounded-md p-2 bg-[#0b1426] max-w-sm">
+                          <div key={idx} className="border border-[#1a2a44] rounded-xl p-2 bg-[#0b1426] max-w-sm">
                             {isImg ? (
-                              <img src={u} alt="adjunto" className="max-h-64 max-w-full rounded" />
+                              <button type="button" className="block focus:outline-none" onClick={() => setPreviewImg(u)} title="Ver imagen">
+                                <img src={u} alt="adjunto" className="w-full h-auto max-h-72 object-contain rounded-lg" />
+                              </button>
                             ) : isPdf ? (
                               <div className="text-sm text-gray-200">PDF adjunto</div>
                             ) : (
                               <div className="text-sm text-gray-200">Archivo</div>
                             )}
                             <div className="mt-2 flex gap-2">
-                              <a
-                                href={u}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-xs text-sky-300 hover:underline"
-                              >
-                                Ver
-                              </a>
+                              {isImg ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewImg(u)}
+                                  className="text-xs text-sky-300 hover:underline"
+                                  title="Ver imagen"
+                                >
+                                  Ver
+                                </button>
+                              ) : (
+                                <a
+                                  href={u}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-sky-300 hover:underline"
+                                >
+                                  Ver
+                                </a>
+                              )}
                               <a
                                 href={downloadUrl}
                                 className="text-xs text-gray-300 hover:underline"
@@ -208,6 +222,25 @@ export default function ChatArea({ selected }) {
           </div>
         )}
       </div>
+
+      {previewImg && (
+        <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4" onClick={() => setPreviewImg(null)}>
+          <div className="relative" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              className="absolute -top-3 -right-3 w-9 h-9 rounded-full bg-white text-black text-xl flex items-center justify-center shadow"
+              onClick={() => setPreviewImg(null)}
+              aria-label="Cerrar"
+            >
+              ×
+            </button>
+            <img src={previewImg} alt="imagen" className="max-w-[90vw] max-h-[85vh] object-contain rounded-xl" />
+            <div className="mt-3 flex justify-center">
+              <a href={`${API_BASE}/library/download?u=${encodeURIComponent(previewImg)}`} className="px-3 py-1.5 text-sm rounded bg-white/90 text-[#0b1426] hover:bg-white">Descargar</a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Cortina inferior para ocultar contenido debajo del input (estilo ChatGPT) */}
       {messages.length > 0 && (
