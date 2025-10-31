@@ -6,9 +6,11 @@ import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
 import { chatAsk, getMessages, API_BASE } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
+import aura_idle from "../animations/aura_idle"
 import aura_wave from "../animations/aura_wave";
-import aura_think from "../animations/aura_think.json";
-import aura_think_loop from "../animations/aura_think_loop.json";
+import aura_think from "../animations/aura_think";
+import aura_think_loop from "../animations/aura_think_loop";
+import aura_got_it from "../animations/aura_got_it";
 import Aura from "./Aura"
 
 export default function ChatArea({ selected }) {
@@ -30,6 +32,19 @@ export default function ChatArea({ selected }) {
   const [previewImg, setPreviewImg] = useState(null)
 
   const hasMessages = messages.length > 0;
+
+  useEffect(() => {
+    if (!messages.length) return;
+
+    const lastMsg = messages[messages.length - 1];
+
+    if (lastMsg.role === "assistant") {
+      setCurrentAnimation(aura_got_it);
+    } else if (lastMsg.role === "user") {
+      setCurrentAnimation(aura_think);
+    }
+  }, [messages]);
+
   const [auraWrapper, setAuraWrapper] = useState("aura-center");
 
   useEffect(() => {
@@ -139,14 +154,14 @@ export default function ChatArea({ selected }) {
 
       <div className={`aura-wrapper ${auraWrapper}`}>
         <Aura
-          idleAnimation={aura_wave}
+          idleAnimation={aura_idle}
           currentAnimation={currentAnimation}
           onAnimationComplete={() => {
             setCurrentAnimation(null);
           }}
         />
       </div>
-      <div className={`chat-wrapper ${chatWrapper}`}>
+      <div>
         <div ref={setContainerEl} className="flex-1 flex flex-col min-h-0 relative overflow-x-hidden">
           {/* Header se vuelve sticky dentro del área scrolleable */}
 
