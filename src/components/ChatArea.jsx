@@ -6,15 +6,18 @@ import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
 import { chatAsk, getMessages, API_BASE } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
+import aura_error from "../animations/aura_error" 
 import aura_idle from "../animations/aura_idle"
+import aura_blink from "../animations/aura_blink"
+import aura_stretch from "../animations/aura_stretch"
 import aura_wave from "../animations/aura_wave";
 import aura_think from "../animations/aura_think";
-import aura_think_loop from "../animations/aura_think_loop";
 import aura_got_it from "../animations/aura_got_it";
 import Aura from "./Aura"
 
 export default function ChatArea({ selected }) {
   const [currentAnimation, setCurrentAnimation] = useState(aura_wave);
+  const [thinkLoop, setThinkLoop] = useState(false);
 
   useEffect(() => {
     // Después de 1 ciclo de aura_wave, el componente mismo
@@ -40,7 +43,9 @@ export default function ChatArea({ selected }) {
 
     if (lastMsg.role === "assistant") {
       setCurrentAnimation(aura_got_it);
+      setThinkLoop(false)
     } else if (lastMsg.role === "user") {
+      setThinkLoop(true)
       setCurrentAnimation(aura_think);
     }
   }, [messages]);
@@ -116,6 +121,7 @@ export default function ChatArea({ selected }) {
       if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
         // cancelado por el usuario
       } else {
+        setCurrentAnimation(aura_error)
         setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
       }
     } finally {
@@ -154,7 +160,9 @@ export default function ChatArea({ selected }) {
 
       <div className={`aura-wrapper ${auraWrapper}`}>
         <Aura
+          thinking={thinkLoop}
           idleAnimation={aura_idle}
+          idleAlternates={[aura_blink, aura_wave, aura_stretch]}
           currentAnimation={currentAnimation}
           onAnimationComplete={() => {
             setCurrentAnimation(null);
