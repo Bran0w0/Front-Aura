@@ -66,7 +66,7 @@ export default function Aura({
                 setAnimationKey((k) => k + 1);
 
                 setTimeout(() => {
-                    if (isIdle) {
+                    if (isIdle && !thinking) {
                         setAnimationData(idleAnimation);
                         setAnimationKey((k) => k + 1);
                     }

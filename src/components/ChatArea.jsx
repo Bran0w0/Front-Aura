@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import LogoAura from "./LogoAura"
 import ChatInput from "./ChatInput"
 import { FiHelpCircle } from "react-icons/fi"
@@ -6,7 +6,7 @@ import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
 import { chatAsk, getMessages, API_BASE } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
-import aura_error from "../animations/aura_error" 
+import aura_error from "../animations/aura_error"
 import aura_idle from "../animations/aura_idle"
 import aura_blink from "../animations/aura_blink"
 import aura_stretch from "../animations/aura_stretch"
@@ -16,6 +16,9 @@ import aura_got_it from "../animations/aura_got_it";
 import Aura from "./Aura"
 
 export default function ChatArea({ selected }) {
+  const auraWrapperRef = useRef(null);
+  const collapseTimerRef = useRef(null);
+
   const [currentAnimation, setCurrentAnimation] = useState(aura_wave);
   const [thinkLoop, setThinkLoop] = useState(false);
 
@@ -155,10 +158,85 @@ export default function ChatArea({ selected }) {
 
   const handleStop = () => { try { abortCtrl?.abort?.() } catch { }; setLoading(false); setAbortCtrl(null) }
 
+  const [messagesPaddingTop, setMessagesPaddingTop] = useState(420);
+  const [overlayExpanded, setOverlayExpanded] = useState(false);
+
+  // limpiar timers al desmontar
+  useEffect(() => {
+    return () => clearTimeout(collapseTimerRef.current);
+  }, []);
+
+  // detectar mensajes: expandir al enviar usuario; cuando responde el assistant, esperar 4s y colapsar
+  useEffect(() => {
+    if (!messages || messages.length === 0) return;
+
+    const last = messages[messages.length - 1];
+
+    if (last.role === "user") {
+      // usuario mandó mensaje: mostrar AURA completa hasta que responda
+      clearTimeout(collapseTimerRef.current);
+      setOverlayExpanded(true);
+    } else if (last.role === "assistant") {
+      // asistente respondió: mostrar AURA completa y mantener 4s antes de cubrir
+      clearTimeout(collapseTimerRef.current);
+      setOverlayExpanded(true);
+      collapseTimerRef.current = setTimeout(() => {
+        setOverlayExpanded(false);
+      }, 4000);
+    }
+  }, [messages]);
+
+  const headVisibleHeight = 500;
+  const overlayHeightCollapsed = Math.max(0, messagesPaddingTop - headVisibleHeight);
+  const overlayHeight = overlayExpanded ? 0 : overlayHeightCollapsed;
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const auraMobileStyle = isMobile
+    ? {
+      position: "fixed",
+      top: `calc(max(env(safe-area-inset-top), 0px) - ${hasMessages ? ("100px") : ("75px")})`, // justo debajo del header fijo
+      left: dockRect.left,
+      width: dockRect.width,
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      pointerEvents: "none",
+      zIndex: 1,
+      // quita transform para evitar traslados indeseados
+      transform: "none",
+    }
+    : {};
+
+  useEffect(() => {
+    const update = () => {
+      const el = auraWrapperRef.current;
+      if (!el) return;
+
+      // Si Aura está fixed en móvil medimos su rect en viewport.
+      // Si no está fixed (desktop) usamos offsetHeight como fallback.
+      const rect = el.getBoundingClientRect();
+      const bottom = rect && rect.bottom ? rect.bottom : el.offsetHeight;
+      // añadimos 8-16px de separación
+      setMessagesPaddingTop(Math.ceil(bottom + 12));
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    // si cambian variables que mueven aura, actualiza también:
+    return () => window.removeEventListener("resize", update);
+  }, [isMobile, /* si usas dockRect cambia aquí para re-mediciones */]);
+
   return (
     <div>
-
-      <div className={`aura-wrapper ${auraWrapper}`}>
+      <div ref={auraWrapperRef} className={`aura-wrapper ${auraWrapper}`} style={auraMobileStyle}>
         <Aura
           thinking={thinkLoop}
           idleAnimation={aura_idle}
@@ -169,14 +247,48 @@ export default function ChatArea({ selected }) {
           }}
         />
       </div>
+
+      {/* Overlay: fijo, usa dockRect para alinearlo con el ancho del layout */}
+      {isMobile && hasMessages && (
+        <div
+          style={{
+            position: "fixed",
+            left: dockRect.left,
+            width: dockRect.width,
+            bottom: "max(env(safe-area-inset-bottom), 0px)",
+            height: overlayHeight,
+            pointerEvents: "none",
+            transition: "height 1s cubic-bezier(0.4, 0.8, 0.4, 1)",
+            zIndex: 1,
+            overflow: "hidden",
+          }}
+        >
+          {/* Gradiente opaco abajo → transparente arriba */}
+          <div
+            style={{
+              width: "100%",
+              height: "100%",
+              background:
+                "linear-gradient(to top, rgba(4,11,23,1.0) 0%, rgba(4,11,23,1.0) 45%, rgba(4, 11, 23, 1) 70%, rgba(4,11,23,0) 100%)",
+              boxShadow: "0 -20px 40px rgba(4,11,23,0.8)",
+            }}
+          />
+        </div>
+      )}
+
       <div>
         <div ref={setContainerEl} className="flex-1 flex flex-col min-h-0 relative overflow-x-hidden">
           {/* Header se vuelve sticky dentro del área scrolleable */}
 
           {/* Scroll area (no scroll in mobile on empty state) */}
           <div
-            className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0 pt-[72px]`}
+            className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0`}
             ref={setScrollerRef}
+            style={{
+              paddingTop: hasMessages && isMobile ? "300px" : "0px",
+              zIndex: 2,
+              transition: "padding-top 300ms cubic-bezier(.2,.9,.2,1)",
+            }}
           >
             {/* Fixed header aligned to chat container with solid background */}
             <div

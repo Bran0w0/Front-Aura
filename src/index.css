@@ -64,6 +64,12 @@
   transform: translateX(-550px) translateY(650px);
 }
 
+@media (max-width: 1024px) {
+  .aura-left {
+    transform: translateX(0px) translateY(300px);
+  }
+}
+
 .chat-wrapper {
   display: flex;
   align-items: center;
