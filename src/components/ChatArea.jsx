@@ -234,8 +234,10 @@ export default function ChatArea({ selected }) {
     return () => window.removeEventListener("resize", update);
   }, [isMobile, /* si usas dockRect cambia aquí para re-mediciones */]);
 
+  const HEADER_HEIGHT = 72; // px
+
   return (
-    <div>
+    <div className="flex-1 flex flex-col min-h-0 relative">
       <div ref={auraWrapperRef} className={`aura-wrapper ${auraWrapper}`} style={auraMobileStyle}>
         <Aura
           thinking={thinkLoop}
@@ -285,7 +287,7 @@ export default function ChatArea({ selected }) {
             className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0`}
             ref={setScrollerRef}
             style={{
-              paddingTop: hasMessages && isMobile ? "300px" : "0px",
+              paddingTop: isMobile ? (hasMessages ? 300 : 0) : (hasMessages ? HEADER_HEIGHT : 0),
               zIndex: 2,
               transition: "padding-top 300ms cubic-bezier(.2,.9,.2,1)",
             }}
