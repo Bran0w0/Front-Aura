@@ -234,6 +234,7 @@ export default function ChatArea({ selected }) {
   }, [isMobile, /* si usas dockRect cambia aquí para re-mediciones */]);
 
   const HEADER_HEIGHT = 72; // px
+  const DESKTOP_TOP_WITH_MESSAGES = 120; // espacio cómodo bajo el header
 
   return (
     <div className="relative">
@@ -291,7 +292,8 @@ export default function ChatArea({ selected }) {
               width: dockRect.width,
               top: 0,
               bottom: 0,
-              paddingTop: hasMessages ? (isMobile ? 300 : messagesPaddingTop) : 0,
+              // En desktop, cuando hay mensajes, arrancar cerca del header
+              paddingTop: hasMessages ? (isMobile ? 300 : DESKTOP_TOP_WITH_MESSAGES) : 0,
               zIndex: 2,
               transition: "padding-top 300ms cubic-bezier(.2,.9,.2,1)",
               overscrollBehavior: 'contain',
