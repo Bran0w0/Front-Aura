@@ -199,20 +199,19 @@ export default function ChatArea({ selected }) {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
-  const auraMobileStyle = isMobile
+  const auraStyle = isMobile
     ? {
-      position: "fixed",
-      top: `calc(max(env(safe-area-inset-top), 0px) - ${hasMessages ? ("100px") : ("75px")})`, // justo debajo del header fijo
-      left: dockRect.left,
-      width: dockRect.width,
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      pointerEvents: "none",
-      zIndex: 1,
-      // quita transform para evitar traslados indeseados
-      transform: "none",
-    }
+        position: "fixed",
+        top: `calc(max(env(safe-area-inset-top), 0px) - ${hasMessages ? "100px" : "75px"})`,
+        left: dockRect.left,
+        width: dockRect.width,
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        pointerEvents: "none",
+        zIndex: 1,
+        transform: "none",
+      }
     : {};
 
   useEffect(() => {
@@ -237,8 +236,8 @@ export default function ChatArea({ selected }) {
   const HEADER_HEIGHT = 72; // px
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 relative">
-      <div ref={auraWrapperRef} className={`aura-wrapper ${auraWrapper}`} style={auraMobileStyle}>
+    <div className="relative">
+      <div ref={auraWrapperRef} className={`aura-wrapper ${auraWrapper}`} style={auraStyle}>
         <Aura
           thinking={thinkLoop}
           idleAnimation={aura_idle}
@@ -279,7 +278,7 @@ export default function ChatArea({ selected }) {
       )}
 
       <div>
-        <div ref={setContainerEl} className="flex-1 flex flex-col min-h-0 relative overflow-x-hidden">
+        <div ref={setContainerEl} className="flex-1 flex flex-col min-h-0 relative overflow-x-hidden" style={{ height: '100dvh' }}>
           {/* Header se vuelve sticky dentro del área scrolleable */}
 
           {/* Scroll area (no scroll in mobile on empty state) */}
@@ -287,9 +286,15 @@ export default function ChatArea({ selected }) {
             className={`${messages.length === 0 ? 'overflow-hidden md:overflow-y-auto pb-0' : 'overflow-y-auto pb-36'} flex-1 min-h-0`}
             ref={setScrollerRef}
             style={{
-              paddingTop: isMobile ? (hasMessages ? 300 : 0) : (hasMessages ? HEADER_HEIGHT : 0),
+              position: 'fixed',
+              left: dockRect.left,
+              width: dockRect.width,
+              top: 0,
+              bottom: 0,
+              paddingTop: hasMessages ? (isMobile ? 300 : messagesPaddingTop) : 0,
               zIndex: 2,
               transition: "padding-top 300ms cubic-bezier(.2,.9,.2,1)",
+              overscrollBehavior: 'contain',
             }}
           >
             {/* Fixed header aligned to chat container with solid background */}
