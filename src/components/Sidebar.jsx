@@ -4,7 +4,7 @@ import { FiEdit, FiSearch, FiMapPin, FiSidebar, FiLogOut, FiLogIn, FiSettings } 
 import { HiMenuAlt2 } from "react-icons/hi"
 import { IoClose } from "react-icons/io5"
 import AuraHead from "./AuraHead"
-import { getConversations, createConversation, authMe, authLogout } from "../lib/api"
+import { getConversations, createConversation, authMe, authLogout, deleteConversation } from "../lib/api"
 import { clearTokens, getRefreshToken, getUserInfo, getAccessToken, colorFromString, getSessionId } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
@@ -192,9 +192,36 @@ export default function Sidebar({ onSelect }) {
             <div className="space-y-1">
               {items.length === 0 && (<p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>)}
               {items.map((c, i) => (
-                <button key={i} onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }} className="w-full text-left pr-2 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden" title={c.title}>
-                  <span className="block truncate">{c.title || 'Nuevo chat'}</span>
-                </button>
+                <div key={i} className="group relative">
+                  <button
+                    onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
+                    className="w-full text-left pr-8 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
+                    title={c.title}
+                  >
+                    <span className="block truncate">{c.title || 'Nuevo chat'}</span>
+                  </button>
+                  {c.conversation_id && (
+                    <button
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        try {
+                          const uid = getUserInfo()?.id
+                          if (uid) {
+                            await deleteConversation(c.conversation_id)
+                          } else {
+                            const sid = getSessionId();
+                            await deleteConversation(c.conversation_id, { session_id: sid })
+                          }
+                          setItems(prev => prev.filter(it => it.conversation_id !== c.conversation_id))
+                        } catch {}
+                      }}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Eliminar"
+                    >
+                      <IoClose className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
               ))}
             </div>
           )}
@@ -218,6 +245,5 @@ export default function Sidebar({ onSelect }) {
     </>
   )
 }
-
 
 

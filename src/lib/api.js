@@ -73,11 +73,14 @@ export const getNote = ({ user_id, status, tag } = {}) =>
 
 // --- Chat (conversations/messages) ---
 export const createConversation = (payload) => api.post("/chat/conversations", payload);
-export const getConversations = ({ user_id, status } = {}) =>
-  api.get("/chat/conversations", { params: { ...(user_id ? { user_id } : {}), ...(status ? { status_f: status } : {}) } });
+export const getConversations = ({ user_id, status, session_id } = {}) =>
+  api.get("/chat/conversations", { params: { ...(user_id ? { user_id } : {}), ...(status ? { status_f: status } : {}), ...(session_id ? { session_id } : {}) } });
 export const createMessage = (payload) => api.post("/chat/messages", payload);
 export const getMessages = ({ conversation_id, user_id } = {}) =>
   api.get("/chat/messages", { params: { ...(conversation_id ? { conversation_id } : {}), ...(user_id ? { user_id } : {}) } });
+
+export const deleteConversation = (id, params = {}) =>
+  api.delete(`/chat/conversations/${id}`, { params });
 
 // --- Chat orchestration ---
 export const chatAsk = (payload, config = {}) => api.post("/chat/ask", payload, config);
