@@ -175,9 +175,9 @@ export default function Sidebar({ onSelect }) {
             <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Buscar chats</span>
           </button>
 
-          <button className={`${rowBase}`} onClick={() => { navigate('/timetable'); if (window.innerWidth < 1024) setMobileOpen(false) }}>
+          <button className={`${rowBase}`} onClick={() => { navigate('/map'); if (window.innerWidth < 1024) setMobileOpen(false) }}>
             <span className={iconCell}><FiMapPin className="w-5 h-5" /></span>
-            <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Ubicate</span>
+            <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Ubícate</span>
           </button>
         </div>
 
