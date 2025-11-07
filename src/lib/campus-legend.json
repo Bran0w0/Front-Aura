@@ -1,0 +1,116 @@
+[
+  {
+    "title": "Administrativos",
+    "color": "#FDE047",
+    "items": [
+      { "code": "09", "label": "AD-09 · Almacén y Compras" },
+      { "code": "19", "label": "AD-19 · Rectoría" },
+      { "code": "30", "label": "AD-30 · Difusión Cultural y Extensión" },
+      { "code": "32", "label": "AD-32 · SPAUABCS" },
+      { "code": "33", "label": "AD-33 · SUTAUABCS" },
+      { "code": "55", "label": "AD-55 · Centro de Atención a Estudiantes" }
+    ]
+  },
+  {
+    "title": "Servicios",
+    "color": "#FDE047",
+    "items": [
+      { "code": "01", "label": "AD-01 · Gimnasio Auditorio" },
+      { "code": "16", "label": "AD-16 · Unidad Procesadora de Alimentos" },
+      { "code": "17", "label": "AD-17 · Talleres de Mantenimiento" },
+      { "code": "18", "label": "AD-18 · Lenguas Extranjeras" },
+      { "code": "20", "label": "AD-20 · Biblioteca" },
+      { "code": "21", "label": "AD-21 · Unidad de Servicios Médicos" },
+      { "code": "31", "label": "AD-31 · Departamento de Laboratorios de Docencia" },
+      { "code": "40", "label": "AD-40 · Planta de Tratamiento de Aguas Residuales" },
+      { "code": "54", "label": "AD-54 · Centro de Reactivos Peligrosos" },
+      { "code": "57", "label": "AD-57 · UNICAP" },
+      { "code": "58", "label": "AD-58 · Unidad Deportiva" },
+      { "code": "59", "label": "AD-59 · Caseta de Vigilancia" },
+      { "code": "60", "label": "AD-60 · Servicios Generales" },
+      { "code": "62", "label": "AD-62 · Centro de Acopio de Residuos Peligrosos" }
+    ]
+  },
+  {
+    "title": "Espacios comerciales",
+    "color": "#FDE047",
+    "items": [
+      { "code": "10", "label": "AD-10 · Cafetería" },
+      { "code": "38", "label": "AD-38 · Librería" },
+      { "code": "63", "label": "AD-63 · CSU Centro de Servicios Universitario" }
+    ]
+  },
+  {
+    "title": "Espacios culturales",
+    "color": "#FDE047",
+    "items": [
+      { "code": "27", "label": "AD-27 · Radio y Televisión" },
+      { "code": "34", "label": "AD-34 · Artes Gráficas" },
+      { "code": "52", "label": "AD-52 · Poliforo Cultural" }
+    ]
+  },
+  {
+    "title": "Sistemas computacionales",
+    "color": "#CBD5F5",
+    "items": [
+      { "code": "39", "label": "DSC-39 · Departamento Académico de Sistemas Computacionales" },
+      { "code": "46", "label": "DSC-46 · Sistemas II" }
+    ]
+  },
+  {
+    "title": "Ciencias Agropecuarias",
+    "color": "#4ADE80",
+    "items": [
+      { "code": "04", "label": "CA-04 · Ciencias Agropecuarias I" },
+      { "code": "05", "label": "CA-05 · Cubículos de Profesores (A)" },
+      { "code": "06", "label": "CA-06 · Laboratorio de Agronomía I" },
+      { "code": "07", "label": "CA-07 · Laboratorio de Docencia I" },
+      { "code": "13", "label": "CA-13 · Cubículos de Pastizales" },
+      { "code": "22", "label": "CA-22 · Cubículos de Pasto Zootécnica" },
+      { "code": "23", "label": "CA-23 · Laboratorio de Alimentos Agropecuarios" },
+      { "code": "35", "label": "CA-35 · Oficinas del Campo Agrícola" },
+      { "code": "36", "label": "CA-36 · CAZUSA" },
+      { "code": "37", "label": "CA-37 · Laboratorio de Agronomía II" },
+      { "code": "41", "label": "CA-41 · Unidad de Cunicultura" },
+      { "code": "42", "label": "CA-42 · Laboratorio de Biotecnología" },
+      { "code": "48", "label": "CA-48 · Laboratorio de Morfofisiología y Veterinaria" },
+      { "code": "49", "label": "CA-49 · Unidad Académica de Productos Pecuarios" },
+      { "code": "51", "label": "CA-51 · Ciencias Agropecuarias II" }
+    ]
+  },
+  {
+    "title": "Ciencias del Mar y la Tierra",
+    "color": "#38BDF8",
+    "items": [
+      { "code": "03", "label": "CMT-03 · Ciencias del Mar y de la Tierra I" },
+      { "code": "05", "label": "CMT-05 · Cubículos de Profesores (B)" },
+      { "code": "07", "label": "CMT-07 · Laboratorio de Ciencias de la Tierra" },
+      { "code": "08", "label": "CMT-08 · Ciencias del Mar y de la Tierra II" },
+      { "code": "12", "label": "CMT-12 · Laboratorio de Geociencias" },
+      { "code": "14", "label": "CMT-14 · Laboratorio de Docencia II" },
+      { "code": "15", "label": "CMT-15 · Laboratorio de Docencias III" },
+      { "code": "24", "label": "CMT-24 · Laboratorio de Ciencias Marinas y Costas" },
+      { "code": "26", "label": "CMT-26 · Ingeniería Básica" },
+      { "code": "29", "label": "CMT-29 · Ingeniería Básica II" },
+      { "code": "61", "label": "CMT-61 · IFER y Licenciatura en Agua" }
+    ]
+  },
+  {
+    "title": "Ciencias Sociales y Humanidades",
+    "color": "#F87171",
+    "items": [
+      { "code": "02", "label": "CSH-02 · Ciencias Sociales" },
+      { "code": "05", "label": "CSH-05 · Cubículos de Profesores" },
+      { "code": "25", "label": "CSH-25 · Historia Regional" },
+      { "code": "28", "label": "CSH-28 · Ciencias Sociales y Humanidades" },
+      { "code": "43", "label": "CSH-43 · Centro de Vinculación, Investigación y Posgrado" },
+      { "code": "44", "label": "CSH-44 · Humanidades II" },
+      { "code": "45", "label": "CSH-45 · Ciencias Sociales y Jurídicas" },
+      { "code": "49", "label": "CSH-49 · Ciencias Políticas" },
+      { "code": "50", "label": "CSH-50 · Cubículos de Profesores" },
+      { "code": "53", "label": "CSH-53 · Posgrado" },
+      { "code": "54", "label": "CSH-54 · Humanidades I" },
+      { "code": "55", "label": "CSH-55 · Humanidades III" }
+    ]
+  }
+]
