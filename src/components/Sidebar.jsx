@@ -16,9 +16,12 @@ export default function Sidebar({ onSelect }) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [fixedPos, setFixedPos] = useState({ left: 0, bottom: 24, width: 300 })
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [search, setSearch] = useState("")
   const navigate = useNavigate()
   const profileBtnRef = useRef(null)
   const profileMenuRef = useRef(null)
+  const searchInputRef = useRef(null)
 
   const user = getUserInfo()
   const [fullName, setFullName] = useState("")
@@ -96,6 +99,20 @@ export default function Sidebar({ onSelect }) {
     }
   }, [profileOpen])
 
+  const closeSearch = () => {
+    try { searchInputRef.current?.blur?.() } catch {}
+    setSearchOpen(false)
+    setSearch("")
+  }
+
+  // Cerrar buscador con ESC
+  useEffect(() => {
+    if (!searchOpen) return
+    const onKey = (e) => { if (e.key === 'Escape') closeSearch() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [searchOpen])
+
   const rowBase = "grid grid-cols-[56px_auto] items-center gap-x-1 w-full h-12 px-0 hover:bg-white/5 rounded-2xl cursor-pointer"
   const iconCell = "w-14 h-12 flex items-center justify-center"
   const labelCell = "text-base text-left truncate"
@@ -170,7 +187,7 @@ export default function Sidebar({ onSelect }) {
             <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Nuevo chat</span>
           </button>
 
-          <button className={`${rowBase}`} onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false) }}>
+          <button className={`${rowBase}`} onClick={() => { setSearchOpen(true); setSearch(""); if (collapsed) setCollapsed(false); setTimeout(() => { try { searchInputRef.current?.focus?.() } catch {} }, 0) }}>
             <span className={iconCell}><FiSearch className="w-5 h-5" /></span>
             <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Buscar chats</span>
           </button>
@@ -190,8 +207,12 @@ export default function Sidebar({ onSelect }) {
         <div className="flex-1 min-h-0 overflow-y-auto px-3">
           {!collapsed && !loading && !error && (
             <div className="space-y-1">
-              {items.length === 0 && (<p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>)}
-              {items.map((c, i) => (
+              {(() => {
+                const q = search.trim().toLowerCase()
+                const list = q ? items.filter(it => (it.title || 'Nuevo chat').toLowerCase().includes(q)) : items
+                if (list.length === 0) return (<p className="text-gray-500 text-base pl-[18px]">No hay resultados.</p>)
+                return list
+              })().map((c, i) => (
                 <div key={i} className="group relative">
                   <button
                     onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
@@ -242,6 +263,72 @@ export default function Sidebar({ onSelect }) {
           )}
         </div>
       </div>
+
+      {searchOpen && createPortal(
+        <div className="fixed inset-0 z-[140]">
+          <div className="absolute inset-0 bg-black/60" />
+          <div className="relative w-full h-full flex items-start justify-center pt-10 md:pt-20 px-4" aria-modal="true" role="dialog" onClick={closeSearch}>
+            <div className="w-[min(860px,100%)] max-h-[80vh] bg-[#040F20] text-white rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+                <div className="text-gray-300">Buscar chats...</div>
+                <button className="p-2 rounded-md hover:bg-white/10" onClick={closeSearch} aria-label="Cerrar">
+                  <IoClose className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="px-4 pt-3 pb-2">
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar chats..."
+                  className="w-full bg-[#020B16] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#33AACD]"
+                />
+              </div>
+              <div className="px-3 pb-6 overflow-y-auto aura-scroll" style={{ maxHeight: 'calc(80vh - 120px)' }}>
+                <div className="mb-2">
+                  <button
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/5"
+                    onClick={async () => {
+                      try {
+                        const uid = getUserInfo()?.id
+                        if (uid) {
+                          const { data } = await createConversation({ user_id: uid, title: 'Nuevo chat' })
+                          const cid = data?.id; if (!cid) return
+                          const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+                          setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                        } else {
+                          const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+                          setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                        }
+                      } catch {}
+                      closeSearch()
+                    }}
+                  >
+                    <FiEdit className="w-5 h-5 text-gray-300" />
+                    <span className="text-gray-200">Nuevo chat</span>
+                  </button>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {(() => {
+                    const q = search.trim().toLowerCase()
+                    const list = q ? items.filter(it => (it.title || 'Nuevo chat').toLowerCase().includes(q)) : items
+                    if (list.length === 0) return (<p className="text-gray-500 text-base pl-2 py-4">No hay resultados.</p>)
+                    return list.map((c, i) => (
+                      <button key={i}
+                        onClick={() => { onSelect?.(c); closeSearch(); if (window.innerWidth < 1024) setMobileOpen(false) }}
+                        className="w-full text-left px-3 py-3 hover:bg-white/5 text-gray-300 rounded-2xl last:mb-3"
+                        title={c.title}
+                      >
+                        <span className="block truncate">{c.title || 'Nuevo chat'}</span>
+                      </button>
+                    ))
+                  })()}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>, document.body)}
     </>
   )
 }

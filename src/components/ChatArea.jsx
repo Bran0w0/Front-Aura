@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react"
 import LogoAura from "./LogoAura"
 import ChatInput from "./ChatInput"
-import { FiHelpCircle } from "react-icons/fi"
-import { PiForkKnifeBold, PiGraduationCapBold } from "react-icons/pi"
+import { LuCalendarRange, LuCalendarDays } from "react-icons/lu"
+import { PiGraduationCapBold } from "react-icons/pi"
 import { chatAsk, getMessages, API_BASE } from "../lib/api"
 import { getUserInfo } from "../lib/auth"
 
@@ -74,9 +74,9 @@ export default function ChatArea({ selected }) {
   }, [hasMessages]);
 
   const suggestions = [
-    { icon: <PiForkKnifeBold className="w-4 h-4 text-yellow-300" />, text: "Llévame a McDoñas" },
-    { icon: <PiGraduationCapBold className="w-4 h-4 text-sky-300" />, text: "¿Cómo inicio el servicio?" },
-    { icon: <FiHelpCircle className="w-4 h-4 text-purple-400" />, text: "¿Quién es el rector?" },
+    { icon: <LuCalendarRange className="w-4 h-4 text-emerald-300" />, text: "Dame el calendario escolar" },
+    { icon: <LuCalendarDays className="w-4 h-4 text-amber-300" />, text: "Dame mi horario" },
+    { icon: <PiGraduationCapBold className="w-4 h-4 text-sky-300" />, text: "Como inicio el servicio social" },
   ]
 
   useEffect(() => {
