@@ -14,6 +14,19 @@ export default function Aura({
     idleInterval = 5000,
     onAnimationComplete = () => { },
 }) {
+    useEffect(() => {
+        if (thinking) {
+            clearInterval(idleTimerRef.current);
+            setAnimationData(aura_think_loop);
+            setAnimationKey(k => k + 1);
+            setIsIdle(true);
+        } else {
+            // Cuando deja de pensar, vuelve a idle normal
+            setAnimationData(idleAnimation);
+            setAnimationKey(k => k + 1);
+        }
+    }, [thinking]);
+
     const [animationData, setAnimationData] = useState(idleAnimation);
     const [isIdle, setIsIdle] = useState(true);
     const [lastIdleAnimation, setLastIdleAnimation] = useState(null);
@@ -38,44 +51,45 @@ export default function Aura({
     // Detectar cuando termina una animación
     const handleComplete = () => {
         onAnimationComplete();
-        // Volvemos al idle
-        if (thinking) {
-            setAnimationData(aura_think_loop);
-        } else {
-            setAnimationData(idleAnimation);
-        }
+        // Solo volvemos a idle normal. El padre decidirá si debe ser think_loop.
+        setAnimationData(idleAnimation);
         setAnimationKey((k) => k + 1);
         setIsIdle(true);
     };
 
     // Ciclo de animaciones idle alternas
     useEffect(() => {
-        if (isIdle && idleAlternates.length > 0) {
+        // si está pensando, no iniciar el temporizador
+        if (!isIdle || thinking || idleAlternates.length === 0) {
             clearInterval(idleTimerRef.current);
-
-            idleTimerRef.current = setInterval(() => {
-                let next = idleAnimation;
-                if (idleAlternates.length > 0) {
-                    do {
-                        next = idleAlternates[Math.floor(Math.random() * idleAlternates.length)];
-                    } while (next === lastIdleAnimation && idleAlternates.length > 1);
-                }
-
-                setLastIdleAnimation(next);
-                setAnimationData(next);
-                setAnimationKey((k) => k + 1);
-
-                setTimeout(() => {
-                    if (isIdle && !thinking) {
-                        setAnimationData(idleAnimation);
-                        setAnimationKey((k) => k + 1);
-                    }
-                }, 3000);
-            }, idleInterval);
+            return;
         }
 
+        clearInterval(idleTimerRef.current);
+
+        idleTimerRef.current = setInterval(() => {
+            let next = idleAnimation;
+            if (idleAlternates.length > 0) {
+                do {
+                    next = idleAlternates[Math.floor(Math.random() * idleAlternates.length)];
+                } while (next === lastIdleAnimation && idleAlternates.length > 1);
+            }
+
+            setLastIdleAnimation(next);
+            setAnimationData(next);
+            setAnimationKey((k) => k + 1);
+
+            setTimeout(() => {
+                // también chequea que no esté pensando al volver a idle
+                if (isIdle && !thinking) {
+                    setAnimationData(idleAnimation);
+                    setAnimationKey((k) => k + 1);
+                }
+            }, 3000);
+        }, idleInterval);
+
         return () => clearInterval(idleTimerRef.current);
-    }, [isIdle, idleAlternates, idleAnimation, idleInterval, animationData, lastIdleAnimation]);
+    }, [isIdle, idleAlternates, idleAnimation, idleInterval, lastIdleAnimation, thinking]);
 
     return (
         <div

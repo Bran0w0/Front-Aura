@@ -27,6 +27,35 @@ export default function ChatArea({ selected }) {
     // detectará "onComplete" y volverá a idle
   }, []);
 
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  useEffect(() => {
+    const update = () => {
+      const el = auraWrapperRef.current;
+      if (!el) return;
+
+      // Si Aura está fixed en móvil medimos su rect en viewport.
+      // Si no está fixed (desktop) usamos offsetHeight como fallback.
+      const rect = el.getBoundingClientRect();
+      const bottom = rect && rect.bottom ? rect.bottom : el.offsetHeight;
+      // añadimos 8-16px de separación
+      setMessagesPaddingTop(Math.ceil(bottom + 12));
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    // si cambian variables que mueven aura, actualiza también:
+    return () => window.removeEventListener("resize", update);
+  }, [isMobile, /* si usas dockRect cambia aquí para re-mediciones */]);
+
   const [text, setText] = useState("")
   const [loading, setLoading] = useState(false)
   const [messages, setMessages] = useState([])
@@ -54,24 +83,25 @@ export default function ChatArea({ selected }) {
   }, [messages]);
 
   const [auraWrapper, setAuraWrapper] = useState("aura-center");
-
+  const [thinking, setThinking] = useState(false);
   useEffect(() => {
-    if (hasMessages) {
-      setAuraWrapper("aura-left");
+    if (isMobile) {
+      if (!hasMessages) {
+        setAuraWrapper("aura-center");
+      }
+      else if (thinking) {
+        setAuraWrapper("aura-center");
+      } else {
+        setAuraWrapper("aura-left");
+      }
     } else {
-      setAuraWrapper("aura-center");
+      if (hasMessages) {
+        setAuraWrapper("aura-left");
+      } else {
+        setAuraWrapper("aura-center");
+      }
     }
-  }, [hasMessages]);
-
-  const [chatWrapper, setChatWrapper] = useState("chat-center");
-
-  useEffect(() => {
-    if (hasMessages) {
-      setChatWrapper("chat-left");
-    } else {
-      setChatWrapper("chat-center");
-    }
-  }, [hasMessages]);
+  }, [hasMessages, thinking, isMobile]);
 
   const suggestions = [
     { icon: <LuCalendarRange className="w-4 h-4 text-emerald-300" />, text: "Dame el calendario escolar" },
@@ -102,6 +132,7 @@ export default function ChatArea({ selected }) {
     const pregunta = (q ?? text).trim()
     if (!pregunta || loading) return
     setLoading(true)
+    setThinking(true);
     setMessages((m) => [...m, { role: "user", content: pregunta }])
     setText("")
     try {
@@ -120,13 +151,21 @@ export default function ChatArea({ selected }) {
         ...m.filter(Boolean),
         { role: "assistant", content: asstMsg?.content || "Sin respuesta", attachments: asstMsg?.attachments || [] },
       ])
+
+      setTimeout(() => {
+        setThinking(false);
+      }, 1500);
     } catch (e) {
       if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
         // cancelado por el usuario
       } else {
         setCurrentAnimation(aura_error)
+        setThinkLoop(false)
         setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
       }
+      setTimeout(() => {
+        setThinking(false);
+      }, 1500);
     } finally {
       setLoading(false)
       setAbortCtrl(null)
@@ -158,124 +197,47 @@ export default function ChatArea({ selected }) {
 
   const handleStop = () => { try { abortCtrl?.abort?.() } catch { }; setLoading(false); setAbortCtrl(null) }
 
-  const [messagesPaddingTop, setMessagesPaddingTop] = useState(420);
-  const [overlayExpanded, setOverlayExpanded] = useState(false);
-
-  // limpiar timers al desmontar
-  useEffect(() => {
-    return () => clearTimeout(collapseTimerRef.current);
-  }, []);
-
-  // detectar mensajes: expandir al enviar usuario; cuando responde el assistant, esperar 4s y colapsar
-  useEffect(() => {
-    if (!messages || messages.length === 0) return;
-
-    const last = messages[messages.length - 1];
-
-    if (last.role === "user") {
-      // usuario mandó mensaje: mostrar AURA completa hasta que responda
-      clearTimeout(collapseTimerRef.current);
-      setOverlayExpanded(true);
-    } else if (last.role === "assistant") {
-      // asistente respondió: mostrar AURA completa y mantener 4s antes de cubrir
-      clearTimeout(collapseTimerRef.current);
-      setOverlayExpanded(true);
-      collapseTimerRef.current = setTimeout(() => {
-        setOverlayExpanded(false);
-      }, 4000);
-    }
-  }, [messages]);
-
-  const headVisibleHeight = 500;
-  const overlayHeightCollapsed = Math.max(0, messagesPaddingTop - headVisibleHeight);
-  const overlayHeight = overlayExpanded ? 0 : overlayHeightCollapsed;
-
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
-
-  const auraStyle = isMobile
-    ? {
-        position: "fixed",
-        top: `calc(max(env(safe-area-inset-top), 0px) - ${hasMessages ? "100px" : "75px"})`,
-        left: dockRect.left,
-        width: dockRect.width,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        pointerEvents: "none",
-        zIndex: 1,
-        transform: "none",
-      }
-    : {};
-
-  useEffect(() => {
-    const update = () => {
-      const el = auraWrapperRef.current;
-      if (!el) return;
-
-      // Si Aura está fixed en móvil medimos su rect en viewport.
-      // Si no está fixed (desktop) usamos offsetHeight como fallback.
-      const rect = el.getBoundingClientRect();
-      const bottom = rect && rect.bottom ? rect.bottom : el.offsetHeight;
-      // añadimos 8-16px de separación
-      setMessagesPaddingTop(Math.ceil(bottom + 12));
-    };
-
-    update();
-    window.addEventListener("resize", update);
-    // si cambian variables que mueven aura, actualiza también:
-    return () => window.removeEventListener("resize", update);
-  }, [isMobile, /* si usas dockRect cambia aquí para re-mediciones */]);
-
   const HEADER_HEIGHT = 72; // px
   const DESKTOP_TOP_WITH_MESSAGES = 120; // espacio cómodo bajo el header
 
   return (
     <div className="relative">
-      <div ref={auraWrapperRef} className={`aura-wrapper ${auraWrapper}`} style={auraStyle}>
-        <Aura
-          thinking={thinkLoop}
-          idleAnimation={aura_idle}
-          idleAlternates={[aura_blink, aura_wave, aura_stretch]}
-          currentAnimation={currentAnimation}
-          onAnimationComplete={() => {
-            setCurrentAnimation(null);
-          }}
-        />
-      </div>
 
-      {/* Overlay: fijo, usa dockRect para alinearlo con el ancho del layout */}
-      {isMobile && hasMessages && (
-        <div
-          style={{
-            position: "fixed",
-            left: dockRect.left,
-            width: dockRect.width,
-            bottom: "max(env(safe-area-inset-bottom), 0px)",
-            height: overlayHeight,
-            pointerEvents: "none",
-            transition: "height 1s cubic-bezier(0.4, 0.8, 0.4, 1)",
-            zIndex: 1,
-            overflow: "hidden",
-          }}
-        >
-          {/* Gradiente opaco abajo → transparente arriba */}
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              background:
-                "linear-gradient(to top, rgba(4,11,23,1.0) 0%, rgba(4,11,23,1.0) 45%, rgba(4, 11, 23, 1) 70%, rgba(4,11,23,0) 100%)",
-              boxShadow: "0 -20px 40px rgba(4,11,23,0.8)",
+      {isMobile && (
+        < div className={`aura-wrapper ${auraWrapper} fixed inset-0 z-50 pointer-events-none`}>
+          <Aura
+            thinking={thinking}
+            idleAnimation={aura_idle}
+            idleAlternates={[aura_blink, aura_wave, aura_stretch]}
+            currentAnimation={currentAnimation}
+            onAnimationComplete={() => setCurrentAnimation(null)}
+          />
+        </div>
+      )}
+
+      {!isMobile && (
+        <div className={`aura-wrapper ${auraWrapper}`}>
+          <Aura
+            thinking={thinking}
+            idleAnimation={aura_idle}
+            idleAlternates={[aura_blink, aura_wave, aura_stretch]}
+            currentAnimation={currentAnimation}
+            onAnimationComplete={() => {
+              setCurrentAnimation(null);
             }}
           />
         </div>
+      )}
+
+      {isMobile && thinking && (
+        <div
+          className={`fixed inset-0 bg-[#040B17]/80 backdrop-blur-sm transition-opacity duration-700 ease-in-out ${thinkLoop ? "opacity-100" : "opacity-0"
+            }`}
+          style={{
+            zIndex: 40,
+            pointerEvents: "none",
+          }}
+        />
       )}
 
       <div>
@@ -293,8 +255,8 @@ export default function ChatArea({ selected }) {
               top: 0,
               bottom: 0,
               // En desktop, cuando hay mensajes, arrancar cerca del header
-              paddingTop: hasMessages ? (isMobile ? 300 : DESKTOP_TOP_WITH_MESSAGES) : 0,
-              zIndex: 2,
+              paddingTop: hasMessages ? (isMobile ? 50 : DESKTOP_TOP_WITH_MESSAGES) : 0,
+              zIndex: 0,
               transition: "padding-top 300ms cubic-bezier(.2,.9,.2,1)",
               overscrollBehavior: 'contain',
             }}
@@ -332,7 +294,7 @@ export default function ChatArea({ selected }) {
                             const isR2 = /\/library\//i.test(u) // heurística: URLs públicas de R2 incluyen /library/
                             const downloadUrl = `${API_BASE}/library/download?u=${encodeURIComponent(u)}`
                             let hostname = ''
-                            try { hostname = new URL(u).hostname } catch {}
+                            try { hostname = new URL(u).hostname } catch { }
                             const favicon = hostname ? `https://icons.duckduckgo.com/ip3/${hostname}.ico` : ''
                             return (
                               <div key={idx} className="border border-[#1a2a44] rounded-xl p-2 bg-[#0b1426] max-w-sm">
@@ -474,7 +436,7 @@ export default function ChatArea({ selected }) {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }
 
@@ -523,7 +485,7 @@ function LinkPreviewCard({ url, fallbackFavicon, hostname }) {
         if (!res.ok) throw new Error('preview failed')
         const json = await res.json()
         if (!abort) setData(json)
-      } catch {}
+      } catch { }
     }
     fetchPreview()
     return () => { abort = true }
@@ -552,7 +514,7 @@ function LinkPreviewCard({ url, fallbackFavicon, hostname }) {
       const h = new URL(raw).hostname
       // Si es nuestro storage (R2) o mismo origen, no proxiar
       if (raw.includes('/library/') || location.hostname === h) return raw
-    } catch {}
+    } catch { }
     return `${API_BASE}/links/fetch-image?u=${encodeURIComponent(raw)}`
   }
 
