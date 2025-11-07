@@ -323,7 +323,7 @@ export default function ChatArea({ selected }) {
                 ) : (
                   <div key={i} className="flex items-start gap-3 mb-6">
                     <div className="text-gray-100 text-lg leading-7">
-                      <div className="whitespace-pre-wrap">{sanitizeContent(m.content, m.attachments)}</div>
+                      <div className="whitespace-pre-wrap">{renderContent(m.content, m.attachments)}</div>
                       {Array.isArray(m.attachments) && m.attachments.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-3">
                           {m.attachments.map((u, idx) => {
@@ -478,26 +478,39 @@ export default function ChatArea({ selected }) {
   )
 }
 
-function sanitizeContent(text, attachments) {
-  let s = (text || "").toString()
-  // Si hay adjuntos, oculta URLs crudas y líneas de "Descargar/Ver"
-  if (attachments && attachments.length > 0) {
-    try {
-      // Quita líneas que contengan alguna URL adjunta
-      const lines = s.split(/\n+/)
-      const cleaned = lines.filter((ln) => {
-        const hasUrl = (attachments || []).some((u) => ln.includes(u))
-        if (hasUrl) return false
-        const lower = ln.trim().toLowerCase()
-        if (lower.startsWith("descargar/ver") || lower.startsWith("descargar:") || lower.startsWith("ver:")) return false
-        // Quita líneas que parezcan URLs sueltas
-        if (/https?:\/\//i.test(lower) && lower.length > 20) return false
-        return true
-      })
-      s = cleaned.join("\n").trim()
-    } catch { }
-  }
-  return s
+function renderContent(text, attachments) {
+  const s = (text || "").toString()
+  const atts = Array.isArray(attachments) ? attachments : []
+  const isR2 = (u) => /\/library\//i.test(u)
+  // Si hay adjuntos, evita duplicar solo si la línea es exactamente la misma URL y es de R2
+  const lines = s.split(/\n+/).filter((ln) => {
+    const trimmed = ln.trim()
+    const isExactUrl = /^https?:\/\//i.test(trimmed) && atts.some((u) => u === trimmed && isR2(u))
+    const lower = trimmed.toLowerCase()
+    if (lower.startsWith("descargar/ver") || lower.startsWith("descargar:") || lower.startsWith("ver:")) return false
+    return !isExactUrl
+  })
+  // Linkify URLs dentro del texto
+  const urlRe = /(https?:\/\/[^\s]+)/g
+  return (
+    <>
+      {lines.map((ln, idx) => {
+        const parts = []
+        let lastIndex = 0
+        for (const m of ln.matchAll(urlRe)) {
+          const [url] = m
+          const start = m.index || 0
+          if (start > lastIndex) parts.push(ln.slice(lastIndex, start))
+          parts.push(
+            <a key={`u-${idx}-${start}`} href={url} target="_blank" rel="noreferrer" className="text-sky-300 hover:underline">{url}</a>
+          )
+          lastIndex = start + url.length
+        }
+        if (lastIndex < ln.length) parts.push(ln.slice(lastIndex))
+        return <div key={idx}>{parts}</div>
+      })}
+    </>
+  )
 }
 
 function LinkPreviewCard({ url, fallbackFavicon, hostname }) {
