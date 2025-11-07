@@ -52,7 +52,14 @@ export default function Sidebar({ onSelect }) {
     const onTitle = (e) => {
       const { id, title } = e.detail || {}
       if (!id || !title) return
-      setItems((prev) => prev.map((it) => (it.conversation_id === id ? { ...it, title } : it)))
+      setItems((prev) => {
+        const exists = prev.some((it) => it.conversation_id === id)
+        if (exists) {
+          return prev.map((it) => (it.conversation_id === id ? { ...it, title, updated_at: new Date().toISOString() } : it))
+        }
+        const newItem = { conversation_id: id, title, updated_at: new Date().toISOString() }
+        return [newItem, ...prev]
+      })
     }
     window.addEventListener("aura:conv-title", onTitle)
     return () => window.removeEventListener("aura:conv-title", onTitle)
@@ -130,7 +137,7 @@ export default function Sidebar({ onSelect }) {
           <span>Iniciar sesión</span>
         </button>
       ) : (
-        <button onClick={async () => { setProfileOpen(false); const rt = getRefreshToken(); try { if (rt) await authLogout({ refresh_token: rt }) } catch {} finally { clearTokens(); navigate('/login', { replace: true }) } }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
+        <button onClick={async () => { setProfileOpen(false); const rt = getRefreshToken(); try { if (rt) await authLogout({ refresh_token: rt }) } catch {} finally { clearTokens(); navigate('/', { replace: true }) } }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
           <FiLogOut className="w-5 h-5 text-gray-300" />
           <span>Salir</span>
         </button>

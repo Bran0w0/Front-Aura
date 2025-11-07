@@ -1,12 +1,24 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
 import { useNavigate } from "react-router-dom";
+import { getUserInfo } from "../lib/auth";
 
 export default function GuestHome() {
   const [selected, setSelected] = useState(null);
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState(() => !getUserInfo());
   const navigate = useNavigate();
+
+  // Si se inicia sesión en otra pestaña, oculta el banner
+  useEffect(() => {
+    const onStorage = (e) => {
+      if (e.key === 'aura_access_token' || e.key === 'aura_refresh_token') {
+        try { setShowBanner(!getUserInfo()); } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
   return (
     <div className="flex h-[100dvh] bg-[#040B17] overflow-hidden">
       <Sidebar onSelect={(item) => setSelected(item)} />
