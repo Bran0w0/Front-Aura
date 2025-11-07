@@ -89,7 +89,7 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     return () => { window.removeEventListener('resize', update); window.removeEventListener('scroll', update, true) }
   }, [profileOpen, collapsed])
 
-  // Cerrar al hacer click/touch fuera del menú (sirve para portal y absoluto)
+  // Cerrar al hacer click/touch fuera del menÃº (sirve para portal y absoluto)
   useEffect(() => {
     if (!profileOpen) return
     const onDoc = (e) => {
@@ -125,7 +125,7 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
   const labelCell = "text-base text-left truncate"
 
   const profileMenu = (
-    <div ref={profileMenuRef} className="bg-[#111827] text-white rounded-2xl border border-white/10 shadow-xl overflow-hidden">
+    <div ref={profileMenuRef} className="bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-xl overflow-hidden">
       <div className="px-4 py-3 text-sm text-gray-300 border-b border-white/10 truncate">{email}</div>
       <button onClick={() => { setProfileOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
         <FiSettings className="w-5 h-5 text-gray-300" />
@@ -277,9 +277,9 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
 
       {searchOpen && createPortal(
         <div className="fixed inset-0 z-[140]">
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div className="relative w-full h-full flex items-start justify-center pt-10 md:pt-20 px-4" aria-modal="true" role="dialog" onClick={closeSearch}>
-            <div className="w-[min(860px,100%)] max-h-[80vh] bg-[#040F20] text-white rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="w-[min(860px,100%)] max-h-[80vh] bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
                 <div className="text-gray-300">Buscar chats...</div>
                 <button className="p-2 rounded-md hover:bg-white/10" onClick={closeSearch} aria-label="Cerrar">
@@ -347,4 +347,7 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     </>
   )
 }
+
+
+
 

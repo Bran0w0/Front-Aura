@@ -102,7 +102,6 @@ export default function Login() {
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-48 -left-48 h-[22rem] w-[22rem] rounded-full bg-[#33AACD]/18 blur-[80px]" />
         <div className="absolute -bottom-52 -right-52 h-[26rem] w-[26rem] rounded-full bg-blue-600/18 blur-[80px]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.045),rgba(4,11,23,0))]" />
       </div>
 
       <div className="w-full max-w-xl relative">
