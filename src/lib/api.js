@@ -40,6 +40,22 @@ api.interceptors.response.use(
         config.headers.Authorization = `Bearer ${data.access_token}`;
         return api(config);
       } catch (e) {
+        // Intento de conciliación entre pestañas: si otro contexto ya rotó el RT,
+        // vuelve a leer y reintenta una sola vez con el RT actualizado.
+        try {
+          const device_id = getDeviceId();
+          const latest = localStorage.getItem("aura_refresh_token");
+          if (latest && latest !== rt) {
+            const { data } = await api.post("/auth/refresh", { refresh_token: latest, device_id });
+            if (data?.access_token) localStorage.setItem("aura_access_token", data.access_token);
+            if (data?.refresh_token) localStorage.setItem("aura_refresh_token", data.refresh_token);
+            config.headers = config.headers || {};
+            config.headers.Authorization = `Bearer ${data.access_token}`;
+            return api(config);
+          }
+        } catch (_) {
+          // cae a limpieza
+        }
         // Limpia tokens si no se puede refrescar
         localStorage.removeItem("aura_access_token");
         localStorage.removeItem("aura_refresh_token");
