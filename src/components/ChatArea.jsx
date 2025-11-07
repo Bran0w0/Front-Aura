@@ -337,7 +337,13 @@ export default function ChatArea({ selected }) {
                                     <img src={u} alt="adjunto" className="w-full h-auto max-h-72 object-contain rounded-lg" />
                                   </button>
                                 ) : isPdf ? (
-                                  <div className="text-sm text-gray-200">PDF adjunto</div>
+                                  <div>
+                                    {/* Vista previa embebida del PDF (primera página en la mayoría de navegadores) */}
+                                    <div className="w-full">
+                                      <embed src={u} type="application/pdf" className="w-full h-64 rounded-lg bg-[#0b1426]" />
+                                    </div>
+                                    <div className="mt-2 text-sm text-gray-200">PDF adjunto</div>
+                                  </div>
                                 ) : (
                                   <div className="text-sm text-gray-200">Archivo</div>
                                 )}
