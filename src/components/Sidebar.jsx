@@ -277,11 +277,11 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
 
       {searchOpen && createPortal(
         <div className="fixed inset-0 z-[140]">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-black/60" />
           <div className="relative w-full h-full flex items-start justify-center pt-10 md:pt-20 px-4" aria-modal="true" role="dialog" onClick={closeSearch}>
-            <div className="w-[min(860px,100%)] max-h-[80vh] bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="w-[min(860px,100%)] max-h-[70vh] bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-2xl overflow-hidden transform-gpu will-change-transform" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                <div className="text-gray-300">Buscar chats...</div>
+                <div className="text-gray-200 font-semibold">Buscar chats</div>
                 <button className="p-2 rounded-md hover:bg-white/10" onClick={closeSearch} aria-label="Cerrar">
                   <IoClose className="w-5 h-5" />
                 </button>
@@ -292,34 +292,34 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar chats..."
+                  placeholder="Busca chats por nombre"
                   className="w-full bg-[#020B16] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-[#33AACD]"
                 />
               </div>
-              <div className="px-3 pb-6 overflow-y-auto aura-scroll" style={{ maxHeight: 'calc(80vh - 120px)' }}>
-                <div className="mb-2">
-                  <button
-                    className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/5"
-                    onClick={async () => {
-                      try {
-                        const uid = getUserInfo()?.id
-                        if (uid) {
-                          const { data } = await createConversation({ user_id: uid, title: 'Nuevo chat' })
-                          const cid = data?.id; if (!cid) return
-                          const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                          setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
-                        } else {
-                          const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                          setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
-                        }
-                      } catch {}
-                      closeSearch()
-                    }}
-                  >
-                    <FiEdit className="w-5 h-5 text-gray-300" />
-                    <span className="text-gray-200">Nuevo chat</span>
-                  </button>
-                </div>
+              <div className="px-3 pb-2">
+                <button
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/5"
+                  onClick={async () => {
+                    try {
+                      const uid = getUserInfo()?.id
+                      if (uid) {
+                        const { data } = await createConversation({ user_id: uid, title: 'Nuevo chat' })
+                        const cid = data?.id; if (!cid) return
+                        const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+                        setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                      } else {
+                        const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+                        setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                      }
+                    } catch {}
+                    closeSearch()
+                  }}
+                >
+                  <FiEdit className="w-5 h-5 text-gray-300" />
+                  <span className="text-gray-200">Nuevo chat</span>
+                </button>
+              </div>
+              <div className="px-3 pb-6 overflow-y-auto aura-scroll" style={{ maxHeight: 'calc(70vh - 120px)', contain: 'content' }}>
                 <div className="divide-y divide-white/5">
                   {(() => {
                     const q = search.trim().toLowerCase()
