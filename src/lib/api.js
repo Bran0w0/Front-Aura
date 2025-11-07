@@ -10,6 +10,25 @@ const api = axios.create({
 
 export const API_BASE = (import.meta.env.VITE_API_URL || "http://127.0.0.1:8000/api");
 
+// Cliente sin interceptor para operaciones de refresh/logout y evitar bucles
+const authClient = axios.create({
+  baseURL: API_BASE,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Garantiza un único refresh en vuelo para evitar tormentas de peticiones
+let refreshPromise = null;
+function refreshOnce({ refresh_token, device_id }) {
+  if (!refreshPromise) {
+    refreshPromise = authClient
+      .post("/auth/refresh", { refresh_token, device_id })
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 // Adjunta Authorization si existe access_token
 api.interceptors.request.use((config) => {
   const t = localStorage.getItem("aura_access_token");
@@ -27,13 +46,15 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const { response, config } = error || {};
-    if (response && response.status === 401 && !config?._retry) {
+    const url = config?.url || "";
+    // Evitar bucle: no intentar refresh si el 401 proviene del propio endpoint de refresh
+    if (response && response.status === 401 && !config?._retry && !url.includes("/auth/refresh")) {
       const rt = localStorage.getItem("aura_refresh_token");
       if (!rt) throw error;
       config._retry = true;
       try {
         const device_id = getDeviceId();
-        const { data } = await api.post("/auth/refresh", { refresh_token: rt, device_id });
+        const { data } = await refreshOnce({ refresh_token: rt, device_id });
         if (data?.access_token) localStorage.setItem("aura_access_token", data.access_token);
         if (data?.refresh_token) localStorage.setItem("aura_refresh_token", data.refresh_token);
         config.headers = config.headers || {};
@@ -46,7 +67,7 @@ api.interceptors.response.use(
           const device_id = getDeviceId();
           const latest = localStorage.getItem("aura_refresh_token");
           if (latest && latest !== rt) {
-            const { data } = await api.post("/auth/refresh", { refresh_token: latest, device_id });
+            const { data } = await refreshOnce({ refresh_token: latest, device_id });
             if (data?.access_token) localStorage.setItem("aura_access_token", data.access_token);
             if (data?.refresh_token) localStorage.setItem("aura_refresh_token", data.refresh_token);
             config.headers = config.headers || {};
@@ -59,6 +80,10 @@ api.interceptors.response.use(
         // Limpia tokens si no se puede refrescar
         localStorage.removeItem("aura_access_token");
         localStorage.removeItem("aura_refresh_token");
+        // Redirige a login (reemplaza el historial para evitar loops al volver)
+        try {
+          if (typeof window !== "undefined") window.location.replace("/login");
+        } catch {}
         throw e;
       }
     }
@@ -119,10 +144,10 @@ export const authLoginGoogle = ({ id_token, device_id }) =>
   api.post("/auth/google", { id_token, device_id });
 
 export const authRefresh = ({ refresh_token, device_id }) =>
-  api.post("/auth/refresh", { refresh_token, device_id });
+  authClient.post("/auth/refresh", { refresh_token, device_id });
 
 export const authLogout = ({ refresh_token }) =>
-  api.post("/auth/logout", { refresh_token });
+  authClient.post("/auth/logout", { refresh_token });
 
 export const authMe = () => api.get("/auth/me");
 // --- Academics: Catálogos ---
