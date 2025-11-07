@@ -329,7 +329,11 @@ export default function ChatArea({ selected }) {
                           {m.attachments.map((u, idx) => {
                             const isImg = /\.(png|jpe?g|webp|gif)$/i.test(u)
                             const isPdf = /\.pdf($|\?)/i.test(u)
+                            const isR2 = /\/library\//i.test(u) // heurística: URLs públicas de R2 incluyen /library/
                             const downloadUrl = `${API_BASE}/library/download?u=${encodeURIComponent(u)}`
+                            let hostname = ''
+                            try { hostname = new URL(u).hostname } catch {}
+                            const favicon = hostname ? `https://icons.duckduckgo.com/ip3/${hostname}.ico` : ''
                             return (
                               <div key={idx} className="border border-[#1a2a44] rounded-xl p-2 bg-[#0b1426] max-w-sm">
                                 {isImg ? (
@@ -338,14 +342,13 @@ export default function ChatArea({ selected }) {
                                   </button>
                                 ) : isPdf ? (
                                   <div>
-                                    {/* Vista previa embebida del PDF (primera página en la mayoría de navegadores) */}
                                     <div className="w-full">
                                       <embed src={u} type="application/pdf" className="w-full h-64 rounded-lg bg-[#0b1426]" />
                                     </div>
                                     <div className="mt-2 text-sm text-gray-200">PDF adjunto</div>
                                   </div>
                                 ) : (
-                                  <div className="text-sm text-gray-200">Archivo</div>
+                                  <LinkPreviewCard url={u} fallbackFavicon={favicon} hostname={hostname} />
                                 )}
                                 <div className="mt-2 flex gap-2">
                                   {isImg ? (
@@ -364,15 +367,17 @@ export default function ChatArea({ selected }) {
                                       rel="noreferrer"
                                       className="text-xs text-sky-300 hover:underline"
                                     >
-                                      Ver
+                                      Abrir
                                     </a>
                                   )}
-                                  <a
-                                    href={downloadUrl}
-                                    className="text-xs text-gray-300 hover:underline"
-                                  >
-                                    Descargar
-                                  </a>
+                                  {isR2 && (
+                                    <a
+                                      href={downloadUrl}
+                                      className="text-xs text-gray-300 hover:underline"
+                                    >
+                                      Descargar
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             )
@@ -493,4 +498,84 @@ function sanitizeContent(text, attachments) {
     } catch { }
   }
   return s
+}
+
+function LinkPreviewCard({ url, fallbackFavicon, hostname }) {
+  const [data, setData] = React.useState(null)
+  React.useEffect(() => {
+    let abort = false
+    async function fetchPreview() {
+      try {
+        const res = await fetch(`${API_BASE}/links/preview?u=${encodeURIComponent(url)}`)
+        if (!res.ok) throw new Error('preview failed')
+        const json = await res.json()
+        if (!abort) setData(json)
+      } catch {}
+    }
+    fetchPreview()
+    return () => { abort = true }
+  }, [url])
+
+  const [imgUrl, setImgUrl] = React.useState(null)
+  const [fallbackStep, setFallbackStep] = React.useState(0)
+  React.useEffect(() => {
+    // Preferencias tipo WhatsApp: og:image > <link rel=icon> > /favicon.ico > ddg icon
+    const origin = (() => { try { return new URL(url).origin } catch { return '' } })()
+    const chain = [
+      data?.image || '',
+      data?.favicon || '',
+      origin ? `${origin}/favicon.ico` : '',
+      fallbackFavicon || '',
+    ].filter(Boolean)
+    const pick = chain[0] || null
+    setImgUrl(pick)
+    setFallbackStep(0)
+  }, [data, fallbackFavicon, url])
+  const title = data?.title || hostname || 'Enlace'
+  const displayUrl = url
+
+  const proxied = (raw) => {
+    try {
+      const h = new URL(raw).hostname
+      // Si es nuestro storage (R2) o mismo origen, no proxiar
+      if (raw.includes('/library/') || location.hostname === h) return raw
+    } catch {}
+    return `${API_BASE}/links/fetch-image?u=${encodeURIComponent(raw)}`
+  }
+
+  return (
+    <a href={url} target="_blank" rel="noreferrer" className="block group">
+      <div className="w-full h-40 bg-[#0f1c33] rounded-lg flex items-center justify-center overflow-hidden">
+        {imgUrl ? (
+          <img
+            src={proxied(imgUrl)}
+            alt="preview"
+            className="max-h-full max-w-full object-contain"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              // Avanza en la cadena de fallbacks
+              try {
+                const origin = new URL(url).origin
+                const candidates = [
+                  data?.image || '',
+                  data?.favicon || '',
+                  `${origin}/favicon.ico`,
+                  fallbackFavicon || '',
+                ].filter(Boolean)
+                const next = candidates[fallbackStep + 1] || null
+                setImgUrl(next)
+                setFallbackStep(fallbackStep + 1)
+              } catch { setImgUrl(null) }
+            }}
+          />
+        ) : (
+          <div className="w-16 h-16 rounded bg-[#10223f]" />
+        )}
+      </div>
+      <div className="mt-2">
+        <div className="text-sm text-white/90 truncate">{title}</div>
+        <div className="text-xs text-sky-300 truncate group-hover:underline">{displayUrl}</div>
+      </div>
+    </a>
+  )
 }
