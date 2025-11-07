@@ -150,6 +150,9 @@ export const authLogout = ({ refresh_token }) =>
   authClient.post("/auth/logout", { refresh_token });
 
 export const authMe = () => api.get("/auth/me");
+// --- Profile ---
+export const getMyProfile = () => api.get("/profile");
+export const updateMyProfile = (payload) => api.patch("/profile", payload);
 // --- Academics: Catálogos ---
 export const createDepartment = (payload) => api.post("/academics/departments", payload);
 export const getDepartments = () => api.get("/academics/departments");

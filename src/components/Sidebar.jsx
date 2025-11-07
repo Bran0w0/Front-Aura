@@ -8,7 +8,7 @@ import { getConversations, createConversation, authMe, authLogout, deleteConvers
 import { clearTokens, getRefreshToken, getUserInfo, getAccessToken, colorFromString, getSessionId } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
-export default function Sidebar({ onSelect }) {
+export default function Sidebar({ onSelect, onOpenProfile }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -127,9 +127,9 @@ export default function Sidebar({ onSelect }) {
   const profileMenu = (
     <div ref={profileMenuRef} className="bg-[#111827] text-white rounded-2xl border border-white/10 shadow-xl overflow-hidden">
       <div className="px-4 py-3 text-sm text-gray-300 border-b border-white/10 truncate">{email}</div>
-      <button onClick={() => setProfileOpen(false)} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
+      <button onClick={() => { setProfileOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
         <FiSettings className="w-5 h-5 text-gray-300" />
-        <span>Configuración</span>
+        <span>Perfil</span>
       </button>
       {isGuest ? (
         <button onClick={() => { setProfileOpen(false); navigate('/login') }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
@@ -347,5 +347,4 @@ export default function Sidebar({ onSelect }) {
     </>
   )
 }
-
 

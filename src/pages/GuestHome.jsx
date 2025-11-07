@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import ChatArea from "../components/ChatArea";
+import ProfilePanel from "../components/ProfilePanel";
 import { useNavigate } from "react-router-dom";
 import { getUserInfo } from "../lib/auth";
 
 export default function GuestHome() {
   const [selected, setSelected] = useState(null);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [showBanner, setShowBanner] = useState(() => !getUserInfo());
   const navigate = useNavigate();
 
@@ -21,8 +23,8 @@ export default function GuestHome() {
   }, []);
   return (
     <div className="flex h-[100dvh] bg-[#040B17] overflow-hidden">
-      <Sidebar onSelect={(item) => setSelected(item)} />
-      <div className="flex-1 relative">
+      <Sidebar onSelect={(item) => setSelected(item)} onOpenProfile={() => setProfileOpen(true)} />
+      <div className={`flex-1 relative`}>
         {/* Área de chat */}
         <ChatArea selected={selected} />
 
@@ -39,6 +41,7 @@ export default function GuestHome() {
           </div>
         )}
       </div>
+      <ProfilePanel open={profileOpen} onClose={() => setProfileOpen(false)} />
     </div>
   );
 }
