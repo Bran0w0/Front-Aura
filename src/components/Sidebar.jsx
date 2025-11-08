@@ -125,7 +125,7 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
   const labelCell = "text-base text-left truncate"
 
   const profileMenu = (
-    <div ref={profileMenuRef} className="bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-xl overflow-hidden">
+    <div ref={profileMenuRef} className="bg-transparent backdrop-blur-lg text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-xl overflow-hidden">
       <div className="px-4 py-3 text-sm text-gray-300 border-b border-white/10 truncate">{email}</div>
       <button onClick={() => { setProfileOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
         <FiSettings className="w-5 h-5 text-gray-300" />

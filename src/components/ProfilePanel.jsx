@@ -124,15 +124,15 @@ export default function ProfilePanel({ open, onClose }) {
     <div className="fixed inset-0 z-[140]">
       <div className="absolute inset-0 bg-black/60" onClick={onClose} />
       <div className="relative w-full h-full flex items-center justify-center p-4" onClick={onClose}>
-        <div className="w-[min(560px,100%)] max-h-[90vh] bg-[#040F20] text-white rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
+        <div className="w-[min(560px,100%)] max-h-[80vh] bg-transparent backdrop-blur-xl text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-2xl overflow-hidden transform-gpu will-change-transform" onClick={(e) => e.stopPropagation()} aria-modal="true" role="dialog">
           <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-            <div className="text-lg font-semibold">Perfil</div>
+            <div className="text-lg font-semibold text-gray-200">Perfil</div>
             <button className="p-2 rounded-lg hover:bg-white/10" onClick={onClose} aria-label="Cerrar">
               <IoClose className="w-5 h-5" />
             </button>
           </div>
 
-          <div className="px-6 py-5 space-y-6 overflow-y-auto aura-scroll" style={{ maxHeight: 'calc(90vh - 64px)' }}>
+          <div className="px-6 py-5 space-y-6 overflow-y-auto aura-scroll" style={{ maxHeight: 'calc(80vh - 64px)' }}>
             <div className="flex flex-col items-center gap-3">
               <div className="w-20 h-20 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}>
                 <span className="text-white text-2xl font-medium leading-none">{initial}</span>
