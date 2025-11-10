@@ -68,31 +68,41 @@ export default function ChatArea({ selected }) {
 
   const hasMessages = messages.length > 0;
 
+  // Handle message changes and set appropriate animations
   useEffect(() => {
     if (!messages.length) return;
 
     const lastMsg = messages[messages.length - 1];
+    console.log("Message changed:", lastMsg.role, "thinking:", thinking);
 
     if (lastMsg.role === "assistant") {
-      setCurrentAnimation(aura_got_it);
-      setThinkLoop(false)
+      // If we get an assistant message, stop thinking and show got_it animation
+      setThinking(false);
+      setTimeout(() => {
+        setThinkingMobile(false);
+      }, 1500);
+      console.log("Setting got_it animation");
     } else if (lastMsg.role === "user") {
-      setThinkLoop(true)
+      // When user sends message, start thinking with initial think animation
+      setThinking(true);
+      setThinkingMobile(true);
       setCurrentAnimation(aura_think);
+      console.log("Setting think animation");
     }
   }, [messages]);
 
   const [auraWrapper, setAuraWrapper] = useState("aura-center");
   const [thinking, setThinking] = useState(false);
+  const [thinkingMobile, setThinkingMobile] = useState(false);
   useEffect(() => {
     if (isMobile) {
       if (!hasMessages) {
         setAuraWrapper("aura-center");
       }
-      else if (thinking) {
-        setAuraWrapper("aura-center");
-      } else {
+      else if (thinkingMobile) {
         setAuraWrapper("aura-left");
+      } else {
+        setAuraWrapper("aura-center");
       }
     } else {
       if (hasMessages) {
@@ -131,41 +141,46 @@ export default function ChatArea({ selected }) {
   const sendQuestion = async (q) => {
     const pregunta = (q ?? text).trim()
     if (!pregunta || loading) return
+
     setLoading(true)
     setThinking(true);
+    setCurrentAnimation(aura_think); // Start with initial think animation
+
     setMessages((m) => [...m, { role: "user", content: pregunta }])
     setText("")
+
     try {
       const controller = new AbortController()
       setAbortCtrl(controller)
       const uid = getUserInfo()?.id
       const { data } = await chatAsk({ user_id: uid, content: pregunta, conversation_id: conversationId || null, create_if_missing: true }, { signal: controller.signal })
+
       const cid = data?.conversation_id
       if (cid && !conversationId) setConversationId(cid)
       const userMsg = data?.user_message
       const asstMsg = data?.assistant_message
+
       if (userMsg?.content && !messages.find((m) => m.content === userMsg.content)) {
         try { window.dispatchEvent(new CustomEvent("aura:conv-title", { detail: { id: cid, title: userMsg.content } })) } catch { }
       }
+
       setMessages((m) => [
         ...m.filter(Boolean),
         { role: "assistant", content: asstMsg?.content || "Sin respuesta", attachments: asstMsg?.attachments || [] },
       ])
+      setCurrentAnimation(aura_got_it);
+      // The useEffect above will handle setting aura_got_it when assistant message is added
 
-      setTimeout(() => {
-        setThinking(false);
-      }, 1500);
     } catch (e) {
       if (e && (e.code === 'ERR_CANCELED' || e.name === 'CanceledError' || e.message?.includes('canceled'))) {
         // cancelado por el usuario
+        setThinking(false);
+        setCurrentAnimation(null); // Return to idle
       } else {
-        setCurrentAnimation(aura_error)
-        setThinkLoop(false)
+        setThinking(false);
+        setCurrentAnimation(aura_error); // Show error animation
         setMessages((m) => [...m, { role: "assistant", content: "No pude obtener respuesta." }])
       }
-      setTimeout(() => {
-        setThinking(false);
-      }, 1500);
     } finally {
       setLoading(false)
       setAbortCtrl(null)
@@ -210,7 +225,14 @@ export default function ChatArea({ selected }) {
             idleAnimation={aura_idle}
             idleAlternates={[aura_blink, aura_wave, aura_stretch]}
             currentAnimation={currentAnimation}
-            onAnimationComplete={() => setCurrentAnimation(null)}
+            onAnimationComplete={() => {
+              console.log("Aura animation complete, thinking:", thinking);
+              // Only reset currentAnimation if we're not in thinking mode
+              // (thinking animations should continue until we explicitly stop them)
+              if (!thinking) {
+                setCurrentAnimation(null);
+              }
+            }}
           />
         </div>
       )}
@@ -223,7 +245,12 @@ export default function ChatArea({ selected }) {
             idleAlternates={[aura_blink, aura_wave, aura_stretch]}
             currentAnimation={currentAnimation}
             onAnimationComplete={() => {
-              setCurrentAnimation(null);
+              console.log("Aura animation complete, thinking:", thinking);
+              // Only reset currentAnimation if we're not in thinking mode
+              // (thinking animations should continue until we explicitly stop them)
+              if (!thinking) {
+                setCurrentAnimation(null);
+              }
             }}
           />
         </div>
