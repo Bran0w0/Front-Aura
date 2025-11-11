@@ -123,6 +123,9 @@ export const getMessages = ({ conversation_id, user_id } = {}) =>
 export const deleteConversation = (id, params = {}) =>
   api.delete(`/chat/conversations/${id}`, { params });
 
+export const updateConversation = (id, payload = {}) =>
+  api.patch(`/chat/conversations/${id}`, payload);
+
 // --- Chat orchestration ---
 export const chatAsk = (payload, config = {}) => api.post("/chat/ask", payload, config);
 

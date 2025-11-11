@@ -1,10 +1,10 @@
 ﻿import React, { useEffect, useRef, useState } from "react"
 import { createPortal } from "react-dom"
-import { FiEdit, FiSearch, FiMapPin, FiSidebar, FiLogOut, FiLogIn, FiSettings } from "react-icons/fi"
+import { FiEdit, FiSearch, FiMapPin, FiSidebar, FiLogOut, FiLogIn, FiSettings, FiMoreHorizontal, FiTrash2 } from "react-icons/fi"
 import { HiMenuAlt2 } from "react-icons/hi"
 import { IoClose } from "react-icons/io5"
 import AuraHead from "./AuraHead"
-import { getConversations, createConversation, authMe, authLogout, deleteConversation } from "../lib/api"
+import { getConversations, createConversation, authMe, authLogout, deleteConversation, updateConversation } from "../lib/api"
 import { clearTokens, getRefreshToken, getUserInfo, getAccessToken, colorFromString } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
@@ -22,6 +22,10 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
   const profileBtnRef = useRef(null)
   const profileMenuRef = useRef(null)
   const searchInputRef = useRef(null)
+  const [menuFor, setMenuFor] = useState(null)
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 })
+  const [menuAnchor, setMenuAnchor] = useState(null)
+  const menuRef = useRef(null)
 
   const user = getUserInfo()
   const [fullName, setFullName] = useState("")
@@ -130,6 +134,44 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     return () => document.removeEventListener('keydown', onKey)
   }, [searchOpen])
 
+  // Cerrar menú contextual de cada chat con ESC o clic fuera
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') setMenuFor(null) }
+    const onDown = () => setMenuFor(null)
+    document.addEventListener('keydown', onKey)
+    document.addEventListener('mousedown', onDown)
+    // Cierra al scrollear el sidebar
+    const sb = document.getElementById('aura-sidebar')
+    const onScroll = () => setMenuFor(null)
+    try { sb?.addEventListener('scroll', onScroll, { passive: true }) } catch {}
+    return () => { 
+      document.removeEventListener('keydown', onKey); 
+      document.removeEventListener('mousedown', onDown);
+      try { sb?.removeEventListener('scroll', onScroll) } catch {}
+    }
+  }, [])
+
+  // Reposiciona para evitar recortes en bordes de viewport
+  useEffect(() => {
+    if (!menuFor || !menuAnchor) return
+    const el = menuRef.current
+    if (!el) return
+    const pad = 8
+    const rect = el.getBoundingClientRect()
+    let top = menuPos.top
+    let left = menuPos.left
+    const vh = window.innerHeight
+    const vw = window.innerWidth
+    if (rect.bottom > vh - pad) {
+      // Desplaza hacia arriba pero manteniendo el menú bajo el botón (no invertir)
+      top = Math.max(pad, Math.round(vh - pad - rect.height))
+    }
+    if (rect.right > vw - pad) {
+      left = Math.max(pad, Math.min(vw - rect.width - pad, left))
+    }
+    if (top !== menuPos.top || left !== menuPos.left) setMenuPos({ top, left })
+  }, [menuFor, menuAnchor, menuPos.top, menuPos.left])
+
   const rowBase = "grid grid-cols-[56px_auto] items-center gap-x-1 w-full h-12 px-0 hover:bg-white/5 rounded-2xl cursor-pointer"
   const iconCell = "w-14 h-12 flex items-center justify-center"
   const labelCell = "text-base text-left truncate"
@@ -173,7 +215,13 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                 <FiSidebar className="w-5 h-5 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150" />
               </button>
             ) : (
-              <button onClick={() => { if (window.innerWidth < 1024) setMobileOpen(false); const token = getAccessToken(); navigate(token ? '/home' : '/') }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer" title="Inicio">
+              <button onClick={() => { 
+                if (window.innerWidth < 1024) setMobileOpen(false); 
+                // Actúa como "Nuevo chat": reinicia la conversación actual
+                try { onSelect?.({ conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }) } catch {}
+                const token = getAccessToken();
+                navigate(token ? '/home' : '/');
+              }} className="w-14 h-12 flex items-center justify-center rounded-2xl hover:bg-white/5 transition-colors cursor-pointer" title="Inicio">
                 <AuraHead className="w-8 h-8" title="Aura" />
               </button>
             )}
@@ -190,16 +238,9 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
           <button className={`${rowBase}`} onClick={async () => {
             try {
               const uid = getUserInfo()?.id
-              if (uid) {
-                const { data } = await createConversation({ user_id: uid, title: 'Nuevo chat' })
-                const cid = data?.id; if (!cid) return
-                const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
-              } else {
-                // Invitado: no registrar en sidebar; solo reinicia el chat actual
-                const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                onSelect?.(newItem)
-              }
+              // No crear conversación inmediata. Solo selecciona un chat vacío.
+              const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+              onSelect?.(newItem)
             } catch {}
             if (window.innerWidth < 1024) setMobileOpen(false)
           }}>
@@ -237,35 +278,37 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                     if (filtered.length === 0) return (<p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>)
                     return (
                       <>
-                        {filtered.map((c, i) => (
-                          <div key={i} className="group relative">
-                            <button
-                              onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
-                              className="w-full text-left pr-8 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
-                              title={c.title}
-                            >
-                              <span className="block truncate">{c.title || 'Nuevo chat'}</span>
-                            </button>
-                            {c.conversation_id && (
+                        {filtered.map((c, i) => {
+                          const open = menuFor === c.conversation_id
+                          return (
+                            <div key={i} className="group relative">
                               <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  try {
-                                    const uid = getUserInfo()?.id
-                                    if (uid) {
-                                      await deleteConversation(c.conversation_id)
-                                    }
-                                    setItems(prev => prev.filter(it => it.conversation_id !== c.conversation_id))
-                                  } catch {}
-                                }}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                                title="Eliminar"
+                                onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
+                                className={`w-full text-left pr-8 py-2 pl-[18px] text-gray-300 rounded-xl text-base overflow-hidden ${open ? 'bg-white/5' : ''} group-hover:bg-white/5`}
+                                title={c.title}
                               >
-                                <IoClose className="w-5 h-5" />
+                                <span className="block truncate">{c.title || 'Nuevo chat'}</span>
                               </button>
-                            )}
-                          </div>
-                        ))}
+                              {c.conversation_id && (
+                                <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                                  <button
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      const r = e.currentTarget.getBoundingClientRect();
+                                      setMenuAnchor({ top: r.top, right: r.right, bottom: r.bottom, left: r.left, width: r.width, height: r.height })
+                                      setMenuPos({ top: Math.round(r.bottom + 8), left: Math.round(r.right + 8) });
+                                      setMenuFor(open ? null : c.conversation_id)
+                                    }}
+                                    className={`p-1.5 rounded-lg text-gray-400 cursor-pointer transition-opacity md:opacity-0 md:group-hover:opacity-100 md:pointer-events-none md:group-hover:pointer-events-auto md:group-hover:text-white ${open ? 'opacity-100 md:opacity-100 pointer-events-auto md:pointer-events-auto text-white' : ''}`}
+                                    title="Más opciones"
+                                  >
+                                    <FiMoreHorizontal className="w-5 h-5" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
                       </>
                     )
                   })()}
@@ -319,16 +362,9 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-2xl hover:bg-white/5"
                   onClick={async () => {
                     try {
-                      const uid = getUserInfo()?.id
-                      if (uid) {
-                        const { data } = await createConversation({ user_id: uid, title: 'Nuevo chat' })
-                        const cid = data?.id; if (!cid) return
-                        const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                        setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
-                      } else {
-                        const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                        onSelect?.(newItem)
-                      }
+                      // No crear conversación ni agregar al sidebar; solo selecciona chat vacío
+                      const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
+                      onSelect?.(newItem)
                     } catch {}
                     closeSearch()
                   }}
@@ -360,6 +396,52 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                 </div>
               </div>
             </div>
+          </div>
+        </div>, document.body)}
+
+      {menuFor && createPortal(
+        <div className="fixed inset-0 z-[160]" onMouseDown={() => setMenuFor(null)} onClick={() => setMenuFor(null)}>
+          <div
+            className="fixed bg-transparent backdrop-blur-lg text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-2xl overflow-hidden"
+            style={{ top: `${menuPos.top}px`, left: `${menuPos.left}px`, width: '208px' }}
+            onMouseDown={(e)=>{ e.stopPropagation() }}
+            onClick={(e)=>{ e.stopPropagation() }}
+            ref={menuRef}
+          >
+            <button
+              className="w-full flex items-center gap-2 px-4 py-3 text-left text-gray-200 hover:bg-white/10"
+              onClick={async () => {
+                try {
+                  const current = (items.find(it=>it.conversation_id===menuFor)?.title) || ''
+                  const name = (window.prompt('Nuevo nombre del chat', current) || '').trim()
+                  if (!name) { setMenuFor(null); return }
+                  await updateConversation(menuFor, { title: name })
+                  setItems(prev => prev.map(it => it.conversation_id === menuFor ? { ...it, title: name, updated_at: new Date().toISOString() } : it))
+                  setMenuFor(null)
+                } catch { setMenuFor(null) }
+              }}
+            >
+              <FiEdit className="w-4 h-4 text-gray-300" />
+              <span>Cambiar nombre</span>
+            </button>
+            <div className="h-px bg-white/10" />
+            <button
+              className="w-full flex items-center gap-2 px-4 py-3 text-left text-red-400 hover:bg-white/10"
+              onClick={async () => {
+                try {
+                  const uid = getUserInfo()?.id
+                  if (uid) {
+                    await deleteConversation(menuFor)
+                  }
+                  setItems(prev => prev.filter(it => it.conversation_id !== menuFor))
+                  onSelect?.({ conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() })
+                } catch {}
+                setMenuFor(null)
+              }}
+            >
+              <FiTrash2 className="w-4 h-4" />
+              <span>Eliminar</span>
+            </button>
           </div>
         </div>, document.body)}
     </>
