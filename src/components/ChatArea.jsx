@@ -15,6 +15,10 @@ import aura_think from "../animations/aura_think";
 import aura_got_it from "../animations/aura_got_it";
 import Aura from "./Aura"
 
+// Debug logging toggle for ChatArea component
+const DEBUG_CHAT = false;
+const clog = (...args) => { if (DEBUG_CHAT) try { console.log(...args) } catch { } };
+
 export default function ChatArea({ selected }) {
   const auraWrapperRef = useRef(null);
   const collapseTimerRef = useRef(null);
@@ -73,7 +77,7 @@ export default function ChatArea({ selected }) {
     if (!messages.length) return;
 
     const lastMsg = messages[messages.length - 1];
-    console.log("Message changed:", lastMsg.role, "thinking:", thinking);
+    clog("Message changed:", lastMsg.role, "thinking:", thinking);
 
     if (lastMsg.role === "assistant") {
       // If we get an assistant message, stop thinking and show got_it animation
@@ -81,13 +85,13 @@ export default function ChatArea({ selected }) {
       setTimeout(() => {
         setThinkingMobile(false);
       }, 1500);
-      console.log("Setting got_it animation");
+      clog("Setting got_it animation");
     } else if (lastMsg.role === "user") {
       // When user sends message, start thinking with initial think animation
       setThinking(true);
       setThinkingMobile(true);
       setCurrentAnimation(aura_think);
-      console.log("Setting think animation");
+      clog("Setting think animation");
     }
   }, [messages]);
 
@@ -223,10 +227,12 @@ export default function ChatArea({ selected }) {
           <Aura
             thinking={thinking}
             idleAnimation={aura_idle}
-            idleAlternates={[aura_blink, aura_wave, aura_stretch]}
+            idleAlternates={[aura_blink, aura_stretch]}
+            idleAlternateMinDelay={3000}
+            idleAlternateMaxDelay={6000}
             currentAnimation={currentAnimation}
             onAnimationComplete={() => {
-              console.log("Aura animation complete, thinking:", thinking);
+              clog("Aura animation complete, thinking:", thinking);
               // Only reset currentAnimation if we're not in thinking mode
               // (thinking animations should continue until we explicitly stop them)
               if (!thinking) {
@@ -242,10 +248,12 @@ export default function ChatArea({ selected }) {
           <Aura
             thinking={thinking}
             idleAnimation={aura_idle}
-            idleAlternates={[aura_blink, aura_wave, aura_stretch]}
+            idleAlternates={[aura_blink, aura_stretch]}
+            idleAlternateMinDelay={3000}
+            idleAlternateMaxDelay={6000}
             currentAnimation={currentAnimation}
             onAnimationComplete={() => {
-              console.log("Aura animation complete, thinking:", thinking);
+              clog("Aura animation complete, thinking:", thinking);
               // Only reset currentAnimation if we're not in thinking mode
               // (thinking animations should continue until we explicitly stop them)
               if (!thinking) {

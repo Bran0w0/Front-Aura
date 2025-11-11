@@ -103,7 +103,8 @@
 }
 
 .aura-center {
-  transform: translateX(0px) translateY(400px);
+  /* Raise Aura a bit so it doesn't overlap the heading */
+  transform: translateX(0px) translateY(340px);
 }
 
 .aura-left {

@@ -5,6 +5,10 @@ import "../aura.css";
 import aura_think_loop from "../animations/aura_think_loop";
 import aura_think from "../animations/aura_think";
 
+// Debug logging toggle for Aura component
+const DEBUG_AURA = false;
+const alog = (...args) => { if (DEBUG_AURA) try { console.log(...args) } catch { } };
+
 export default function Aura({
     thinking = false,
     idleAnimation,
@@ -12,7 +16,9 @@ export default function Aura({
     currentAnimation = null,
     override = false,
     style = {},
-    idleInterval = 5000,
+    // Programa alternancias de idle (parpadeo/estiramiento)
+    idleAlternateMinDelay = 7000,
+    idleAlternateMaxDelay = 12000,
     onAnimationComplete = () => { },
 }) {
     const [animationData, setAnimationData] = useState(idleAnimation);
@@ -23,6 +29,7 @@ export default function Aura({
     const lottieRef = useRef();
     const idleTimerRef = useRef();
     const alternateTimeoutRef = useRef();
+    const idleCooldownRef = useRef(false);
     
     // Track current state more precisely
     const currentStateRef = useRef({
@@ -34,21 +41,21 @@ export default function Aura({
 
     // Clear all timers
     const clearAllTimers = useCallback(() => {
-        clearInterval(idleTimerRef.current);
-        clearTimeout(alternateTimeoutRef.current);
+        try { clearTimeout(idleTimerRef.current); } catch { }
+        try { clearTimeout(alternateTimeoutRef.current); } catch { }
     }, []);
 
     // Handle thinking state - this should show aura_think first, then aura_think_loop
     useEffect(() => {
         if (thinking && !currentStateRef.current.isThinking) {
-            console.log("Starting thinking animation");
+            alog("Starting thinking animation");
             clearAllTimers();
             setIsIdle(false);
             currentStateRef.current.isThinking = true;
             currentStateRef.current.lastAnimationType = 'thinking';
             // Don't set think_loop here - let parent control the initial think animation
         } else if (!thinking && currentStateRef.current.isThinking) {
-            console.log("Stopping thinking animation");
+            alog("Stopping thinking animation");
             currentStateRef.current.isThinking = false;
             // Don't reset to idle here - let the response animation or completion handler handle it
         }
@@ -57,13 +64,19 @@ export default function Aura({
     // Handle current animation changes (like aura_think, aura_got_it, aura_error)
     useEffect(() => {
         if (currentAnimation) {
-            console.log("Setting current animation:", currentAnimation);
+            alog("Setting current animation:", currentAnimation);
             clearAllTimers();
             setAnimationData(currentAnimation);
             setAnimationKey(k => k + 1);
             setIsIdle(false);
             currentStateRef.current.hasCurrentAnimation = true;
             currentStateRef.current.lastAnimationType = 'response';
+            // Evita que una alterna arranque durante o inmediatamente después
+            idleCooldownRef.current = true;
+            try { clearTimeout(alternateTimeoutRef.current); } catch { }
+            alternateTimeoutRef.current = setTimeout(() => {
+                idleCooldownRef.current = false;
+            }, 2000);
             
             // If this is the thinking animation, we should transition to think_loop after it completes
             if (currentAnimation === aura_think) {
@@ -74,14 +87,14 @@ export default function Aura({
 
     // Handle animation completion
     const handleComplete = useCallback(() => {
-        console.log("Animation completed, current state:", currentStateRef.current);
+        alog("Animation completed, current state:", currentStateRef.current);
         
         onAnimationComplete();
         
         // If we were in thinking mode and just finished the initial think animation,
         // transition to think_loop
         if (currentStateRef.current.isThinking && currentStateRef.current.lastAnimationType === 'response') {
-            console.log("Transitioning to think loop");
+            alog("Transitioning to think loop");
             setAnimationData(aura_think_loop);
             setAnimationKey(k => k + 1);
             setIsIdle(false);
@@ -98,74 +111,66 @@ export default function Aura({
             currentStateRef.current.hasCurrentAnimation = false;
             currentStateRef.current.lastAnimationType = 'idle';
             currentStateRef.current.isInAlternateIdle = false;
-        }
-    }, [onAnimationComplete, idleAnimation]);
-
-    // Idle alternates system - only runs when truly idle and not thinking
-    useEffect(() => {
-        const shouldRunIdleAlternates = 
-            isIdle && 
-            !currentStateRef.current.isThinking && 
-            !currentStateRef.current.hasCurrentAnimation &&
-            idleAlternates.length > 0;
-
-        console.log("Idle alternates check:", { 
-            isIdle, 
-            isThinking: currentStateRef.current.isThinking,
-            hasCurrentAnimation: currentStateRef.current.hasCurrentAnimation,
-            shouldRun: shouldRunIdleAlternates 
-        });
-
-        if (!shouldRunIdleAlternates) {
-            clearAllTimers();
-            return;
-        }
-
-        // Start with base idle
-        setAnimationData(idleAnimation);
-        setAnimationKey(k => k + 1);
-
-        idleTimerRef.current = setInterval(() => {
-            // Double-check we're still in idle state
-            if (isIdle && 
-                !currentStateRef.current.isThinking && 
-                !currentStateRef.current.hasCurrentAnimation) {
-                
-                let nextAnimation;
-                if (idleAlternates.length > 0) {
-                    do {
-                        nextAnimation = idleAlternates[Math.floor(Math.random() * idleAlternates.length)];
-                    } while (nextAnimation === lastIdleAnimation && idleAlternates.length > 1);
-                } else {
-                    nextAnimation = idleAnimation;
-                }
-
-                console.log("Playing alternate idle:", nextAnimation);
-                setLastIdleAnimation(nextAnimation);
-                setAnimationData(nextAnimation);
-                setAnimationKey(k => k + 1);
-                currentStateRef.current.isInAlternateIdle = true;
-                currentStateRef.current.lastAnimationType = 'alternate';
-
-                // Set timeout to return to base idle after alternate animation
-                alternateTimeoutRef.current = setTimeout(() => {
-                    if (currentStateRef.current.isInAlternateIdle && 
-                        !currentStateRef.current.isThinking && 
-                        !currentStateRef.current.hasCurrentAnimation) {
-                        console.log("Returning to base idle");
-                        setAnimationData(idleAnimation);
+            // Programar próximo alternate tras volver al idle base
+            try {
+                clearTimeout(idleTimerRef.current);
+                const min = Math.max(1000, idleAlternateMinDelay);
+                const max = Math.max(min + 1000, idleAlternateMaxDelay);
+                const delay = 1200 + Math.floor(Math.random() * (max - min + 1)) + min;
+                idleTimerRef.current = setTimeout(() => {
+                    if (!currentStateRef.current.isThinking && !currentStateRef.current.hasCurrentAnimation) {
+                        let nextAnimation;
+                        if (Array.isArray(idleAlternates) && idleAlternates.length > 0) {
+                            do {
+                                nextAnimation = idleAlternates[Math.floor(Math.random() * idleAlternates.length)];
+                            } while (nextAnimation === lastIdleAnimation && idleAlternates.length > 1);
+                        } else {
+                            nextAnimation = idleAnimation;
+                        }
+                        setLastIdleAnimation(nextAnimation);
+                        setAnimationData(nextAnimation);
                         setAnimationKey(k => k + 1);
-                        currentStateRef.current.isInAlternateIdle = false;
-                        currentStateRef.current.lastAnimationType = 'idle';
+                        currentStateRef.current.isInAlternateIdle = true;
+                        currentStateRef.current.lastAnimationType = 'alternate';
                     }
-                }, 3000);
-            }
-        }, idleInterval);
+                }, delay);
+            } catch { }
+        }
+    }, [onAnimationComplete, idleAnimation, idleAlternates, idleAlternateMinDelay, idleAlternateMaxDelay, lastIdleAnimation]);
 
-        return () => {
-            clearAllTimers();
-        };
-    }, [isIdle, idleAlternates, idleAnimation, idleInterval, lastIdleAnimation, clearAllTimers]);
+    // Programador de alternas centralizado
+    const scheduleAlternate = useCallback(() => {
+        try { clearTimeout(idleTimerRef.current); } catch {}
+        const min = Math.max(500, idleAlternateMinDelay);
+        const max = Math.max(min + 500, idleAlternateMaxDelay);
+        const base = Math.floor(Math.random() * (max - min + 1)) + min;
+        const cooldown = idleCooldownRef.current ? 1200 : 0;
+        const delay = base + cooldown;
+        idleTimerRef.current = setTimeout(() => {
+            if (!isIdle || currentStateRef.current.isThinking || currentStateRef.current.hasCurrentAnimation) return;
+            if (!Array.isArray(idleAlternates) || idleAlternates.length === 0) return;
+
+            let nextAnimation;
+            do {
+                nextAnimation = idleAlternates[Math.floor(Math.random() * idleAlternates.length)];
+            } while (nextAnimation === lastIdleAnimation && idleAlternates.length > 1);
+
+            setLastIdleAnimation(nextAnimation);
+            setAnimationData(nextAnimation);
+            setIsIdle(false);
+            setAnimationKey(k => k + 1);
+            currentStateRef.current.isInAlternateIdle = true;
+            currentStateRef.current.lastAnimationType = 'alternate';
+        }, delay);
+    }, [isIdle, idleAlternates, idleAnimation, idleAlternateMinDelay, idleAlternateMaxDelay]);
+
+    // Arranca programador cuando entramos a idle
+    useEffect(() => {
+        if (isIdle && !currentStateRef.current.isThinking && !currentStateRef.current.hasCurrentAnimation) {
+            scheduleAlternate();
+        }
+        return () => clearAllTimers();
+    }, [isIdle, scheduleAlternate, clearAllTimers]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -189,7 +194,7 @@ export default function Aura({
                 key={animationKey}
                 lottieRef={lottieRef}
                 animationData={animationData}
-                loop={currentStateRef.current.isThinking && animationData === aura_think_loop}
+                loop={(animationData === idleAnimation) || (currentStateRef.current.isThinking && animationData === aura_think_loop)}
                 autoplay={true}
                 onComplete={handleComplete}
             />
