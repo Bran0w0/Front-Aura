@@ -194,8 +194,9 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                 const newItem = { conversation_id: cid, title: 'Nuevo chat', updated_at: new Date().toISOString() }
                 setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
               } else {
+                // Invitado: no registrar en sidebar; solo reinicia el chat actual
                 const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                onSelect?.(newItem)
               }
             } catch {}
             if (window.innerWidth < 1024) setMobileOpen(false)
@@ -204,10 +205,12 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
             <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Nuevo chat</span>
           </button>
 
-          <button className={`${rowBase}`} onClick={() => { setSearchOpen(true); setSearch(""); if (collapsed) setCollapsed(false); setTimeout(() => { try { searchInputRef.current?.focus?.() } catch {} }, 0) }}>
-            <span className={iconCell}><FiSearch className="w-5 h-5" /></span>
-            <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Buscar chats</span>
-          </button>
+          {!isGuest && (
+            <button className={`${rowBase}`} onClick={() => { setSearchOpen(true); setSearch(""); if (collapsed) setCollapsed(false); setTimeout(() => { try { searchInputRef.current?.focus?.() } catch {} }, 0) }}>
+              <span className={iconCell}><FiSearch className="w-5 h-5" /></span>
+              <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>Buscar chats</span>
+            </button>
+          )}
 
           <button className={`${rowBase}`} onClick={() => { navigate('/map'); if (window.innerWidth < 1024) setMobileOpen(false) }}>
             <span className={iconCell}><FiMapPin className="w-5 h-5" /></span>
@@ -215,74 +218,80 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
           </button>
         </div>
 
-        <div className="px-3 pt-2">
-          {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[18px]">Chats</h3>}
-          {!collapsed && loading && <p className="text-gray-400 text-base pl-[18px]">Cargando...</p>}
-          {!collapsed && error && <p className="text-red-400 text-base pl-[18px]">{error}</p>}
-        </div>
-
-        <div className="flex-1 min-h-0 overflow-y-auto px-3">
-          {!collapsed && !loading && !error && (
-            <div className="space-y-1">
-              {(() => {
-                const q = search.trim().toLowerCase()
-                const filtered = q ? items.filter(it => (it.title || 'Nuevo chat').toLowerCase().includes(q)) : items
-                if (filtered.length === 0) return (<p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>)
-                return (
-                  <>
-                    {filtered.map((c, i) => (
-                      <div key={i} className="group relative">
-                        <button
-                          onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
-                          className="w-full text-left pr-8 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
-                          title={c.title}
-                        >
-                          <span className="block truncate">{c.title || 'Nuevo chat'}</span>
-                        </button>
-                        {c.conversation_id && (
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              try {
-                                const uid = getUserInfo()?.id
-                                if (uid) {
-                                  await deleteConversation(c.conversation_id)
-                                }
-                                setItems(prev => prev.filter(it => it.conversation_id !== c.conversation_id))
-                              } catch {}
-                            }}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Eliminar"
-                          >
-                            <IoClose className="w-5 h-5" />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </>
-                )
-              })()}
+        {!isGuest && (
+          <>
+            <div className="px-3 pt-2">
+              {!collapsed && <h3 className="text-[#33AACD] text-base font-semibold mb-2 pl-[18px]">Chats</h3>}
+              {!collapsed && loading && <p className="text-gray-400 text-base pl-[18px]">Cargando...</p>}
+              {!collapsed && error && <p className="text-red-400 text-base pl-[18px]">{error}</p>}
             </div>
-          )}
-        </div>
 
-        <div className="px-3 py-4 border-t border-white/10 relative">
-          <button ref={profileBtnRef} className={`${rowBase}`} onClick={() => setProfileOpen(v=>!v)}>
-            <span className={iconCell}><div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}><span className="text-white text-sm font-medium leading-none">{initial}</span></div></span>
-            <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>{displayName}</span>
-          </button>
-          {profileOpen && (
-            collapsed
-              ? createPortal(
-                  <div style={{ position: 'fixed', left: fixedPos.left, bottom: fixedPos.bottom, width: fixedPos.width }} className="z-[130]">
-                    {profileMenu}
-                  </div>, document.body)
-              : (<div className="absolute left-3 right-3 bottom-24 z-[120]">{profileMenu}</div>)
-          )}
-        </div>
+            <div className="flex-1 min-h-0 overflow-y-auto px-3">
+              {!collapsed && !loading && !error && (
+                <div className="space-y-1">
+                  {(() => {
+                    const q = search.trim().toLowerCase()
+                    const filtered = q ? items.filter(it => (it.title || 'Nuevo chat').toLowerCase().includes(q)) : items
+                    if (filtered.length === 0) return (<p className="text-gray-500 text-base pl-[18px]">Aun no tienes chats.</p>)
+                    return (
+                      <>
+                        {filtered.map((c, i) => (
+                          <div key={i} className="group relative">
+                            <button
+                              onClick={() => { onSelect?.(c); if (window.innerWidth < 1024) setMobileOpen(false) }}
+                              className="w-full text-left pr-8 py-2 pl-[18px] text-gray-300 hover:bg-white/5 rounded-xl text-base overflow-hidden"
+                              title={c.title}
+                            >
+                              <span className="block truncate">{c.title || 'Nuevo chat'}</span>
+                            </button>
+                            {c.conversation_id && (
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  try {
+                                    const uid = getUserInfo()?.id
+                                    if (uid) {
+                                      await deleteConversation(c.conversation_id)
+                                    }
+                                    setItems(prev => prev.filter(it => it.conversation_id !== c.conversation_id))
+                                  } catch {}
+                                }}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded-md text-gray-400 hover:text-red-400 hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Eliminar"
+                              >
+                                <IoClose className="w-5 h-5" />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </>
+                    )
+                  })()}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {!isGuest && (
+          <div className="px-3 py-4 border-t border-white/10 relative">
+            <button ref={profileBtnRef} className={`${rowBase}`} onClick={() => setProfileOpen(v=>!v)}>
+              <span className={iconCell}><div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}><span className="text-white text-sm font-medium leading-none">{initial}</span></div></span>
+              <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>{displayName}</span>
+            </button>
+            {profileOpen && (
+              collapsed
+                ? createPortal(
+                    <div style={{ position: 'fixed', left: fixedPos.left, bottom: fixedPos.bottom, width: fixedPos.width }} className="z-[130]">
+                      {profileMenu}
+                    </div>, document.body)
+                : (<div className="absolute left-3 right-3 bottom-24 z-[120]">{profileMenu}</div>)
+            )}
+          </div>
+        )}
       </div>
 
-      {searchOpen && createPortal(
+      {!isGuest && searchOpen && createPortal(
         <div className="fixed inset-0 z-[140]">
           <div className="absolute inset-0 bg-black/60" />
           <div className="relative w-full h-full flex items-start justify-center pt-10 md:pt-20 px-4" aria-modal="true" role="dialog" onClick={closeSearch}>
@@ -316,7 +325,7 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                         setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
                       } else {
                         const newItem = { conversation_id: null, title: 'Nuevo chat', updated_at: new Date().toISOString() }
-                        setItems(prev => [newItem, ...prev]); onSelect?.(newItem)
+                        onSelect?.(newItem)
                       }
                     } catch {}
                     closeSearch()
@@ -354,5 +363,4 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     </>
   )
 }
-
 
