@@ -80,12 +80,9 @@ export default function ChatArea({ selected }) {
     clog("Message changed:", lastMsg.role, "thinking:", thinking);
 
     if (lastMsg.role === "assistant") {
-      // If we get an assistant message, stop thinking and show got_it animation
+      // Stop thinking but keep Aura visible until the got_it animation completes
       setThinking(false);
-      setTimeout(() => {
-        setThinkingMobile(false);
-      }, 1500);
-      clog("Setting got_it animation");
+      clog("Assistant message received; will play got_it and then hide.");
     } else if (lastMsg.role === "user") {
       // When user sends message, start thinking with initial think animation
       setThinking(true);
@@ -98,24 +95,23 @@ export default function ChatArea({ selected }) {
   const [auraWrapper, setAuraWrapper] = useState("aura-center");
   const [thinking, setThinking] = useState(false);
   const [thinkingMobile, setThinkingMobile] = useState(false);
+  const [mobileLeaving, setMobileLeaving] = useState(false);
   useEffect(() => {
     if (isMobile) {
-      if (!hasMessages) {
-        setAuraWrapper("aura-center");
-      }
-      else if (thinkingMobile) {
+      if (mobileLeaving) {
         setAuraWrapper("aura-left");
+      } else if (!hasMessages) {
+        setAuraWrapper("aura-center");
+      } else if (thinkingMobile) {
+        // Durante el pensamiento/entrega mantener centrado
+        setAuraWrapper("aura-center");
       } else {
         setAuraWrapper("aura-center");
       }
     } else {
-      if (hasMessages) {
-        setAuraWrapper("aura-left");
-      } else {
-        setAuraWrapper("aura-center");
-      }
+      setAuraWrapper(hasMessages ? "aura-left" : "aura-center");
     }
-  }, [hasMessages, thinking, isMobile]);
+  }, [hasMessages, isMobile, thinkingMobile, mobileLeaving, currentAnimation]);
 
   const suggestions = [
     { icon: <LuCalendarRange className="w-4 h-4 text-emerald-300" />, text: "Dame el calendario escolar" },
@@ -151,6 +147,13 @@ export default function ChatArea({ selected }) {
 
     setLoading(true)
     setThinking(true);
+    // Mobile: iniciar con movimiento de entrada (izquierda -> centro)
+    if (isMobile) {
+      setMobileLeaving(false);
+      try { setAuraWrapper("aura-left"); } catch { }
+      setTimeout(() => { try { setAuraWrapper("aura-center"); } catch { } }, 30);
+    }
+    setThinkingMobile(true); // Aura visible inmediatamente en móvil
     setCurrentAnimation(aura_think); // Start with initial think animation
 
     setMessages((m) => [...m, { role: "user", content: pregunta }])
@@ -225,8 +228,8 @@ export default function ChatArea({ selected }) {
   return (
     <div className="relative">
 
-      {isMobile && (
-        < div className={`aura-wrapper ${auraWrapper} fixed inset-0 z-50 pointer-events-none`}>
+      {isMobile && (!hasMessages || thinkingMobile) && (
+         < div className={`aura-wrapper ${auraWrapper} fixed inset-0 z-50 pointer-events-none`}>
           <Aura
             thinking={thinking}
             idleAnimation={aura_idle}
@@ -235,11 +238,16 @@ export default function ChatArea({ selected }) {
             idleAlternateMaxDelay={6000}
             currentAnimation={currentAnimation}
             onAnimationComplete={() => {
-              clog("Aura animation complete, thinking:", thinking);
-              // Only reset currentAnimation if we're not in thinking mode
-              // (thinking animations should continue until we explicitly stop them)
+              const wasGotIt = currentAnimation === aura_got_it;
+              clog("Aura animation complete, thinking:", thinking, "wasGotIt:", wasGotIt);
               if (!thinking) {
                 setCurrentAnimation(null);
+                if (isMobile && wasGotIt) {
+                  // Secuencia de salida con movimiento: centro -> izquierda, luego ocultar
+                  setMobileLeaving(true);
+                  try { setAuraWrapper("aura-left"); } catch { }
+                  setTimeout(() => { try { setThinkingMobile(false); setMobileLeaving(false); } catch { } }, 1200);
+                }
               }
             }}
           />
@@ -256,9 +264,8 @@ export default function ChatArea({ selected }) {
             idleAlternateMaxDelay={6000}
             currentAnimation={currentAnimation}
             onAnimationComplete={() => {
-              clog("Aura animation complete, thinking:", thinking);
-              // Only reset currentAnimation if we're not in thinking mode
-              // (thinking animations should continue until we explicitly stop them)
+              const wasGotIt = currentAnimation === aura_got_it;
+              clog("Aura animation complete, thinking:", thinking, "wasGotIt:", wasGotIt);
               if (!thinking) {
                 setCurrentAnimation(null);
               }
