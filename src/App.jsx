@@ -1,6 +1,8 @@
 import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import GuestHome from "./pages/GuestHome";
 import Timetable from "./pages/Timetable";
 import Map from "./pages/Map";
@@ -28,6 +30,8 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
         <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
+        <Route path="/forgot-password" element={<RedirectIfAuthed><ForgotPassword /></RedirectIfAuthed>} />
+        <Route path="/reset-password" element={<RedirectIfAuthed><ResetPassword /></RedirectIfAuthed>} />
         <Route
           path="/home"
           element={

@@ -188,7 +188,7 @@ export default function Login() {
                   <span>Mantener sesión abierta</span>
                 </label>
                 <div className="text-sm text-gray-400 w-full text-center sm:w-auto sm:text-right">
-                  <button type="button" className="hover:text-white/90">
+                  <button type="button" onClick={() => navigate('/forgot-password')} className="hover:text-white/90 cursor-pointer">
                     ¿Olvidaste tu contraseña?
                   </button>
                 </div>

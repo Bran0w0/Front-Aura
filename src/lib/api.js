@@ -150,6 +150,11 @@ export const authLogout = ({ refresh_token }) =>
   authClient.post("/auth/logout", { refresh_token });
 
 export const authMe = () => api.get("/auth/me");
+// Password reset
+export const authForgotPassword = ({ email }) =>
+  api.post("/auth/forgot-password", { email });
+export const authConfirmReset = ({ email, code, new_password }) =>
+  api.post("/auth/reset-password", { email, code, new_password });
 // --- Profile ---
 export const getMyProfile = () => api.get("/profile");
 export const updateMyProfile = (payload) => api.patch("/profile", payload);
