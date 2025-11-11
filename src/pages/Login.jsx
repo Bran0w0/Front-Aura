@@ -43,6 +43,7 @@ export default function Login() {
           },
         });
         // Render oficial (oculto). Usamos un botón estilizado que dispara su click.
+        // Render oficial (oculto). Usamos un botón estilizado que dispara su click.
         window.google.accounts.id.renderButton(googleBtnRef.current, {
           theme: "outline",
           size: "large",
