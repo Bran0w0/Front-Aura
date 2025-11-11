@@ -15,15 +15,17 @@ export function getDeviceId() {
   return id;
 }
 
+// Session ID efímero para modo invitado: se regenera en cada carga
+// de página (no se persiste), de modo que los chats invitados no
+// se comparten entre dispositivos ni sobreviven a un refresh.
+let __runtimeSessionId = null;
 export function getSessionId() {
-  const key = "aura_session_id";
-  let id = localStorage.getItem(key);
-  if (!id) {
-    if (window.crypto?.randomUUID) id = window.crypto.randomUUID();
-    else id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem(key, id);
+  if (!__runtimeSessionId) {
+    try { localStorage.removeItem("aura_session_id"); } catch {}
+    if (window.crypto?.randomUUID) __runtimeSessionId = window.crypto.randomUUID();
+    else __runtimeSessionId = Math.random().toString(36).slice(2) + Date.now().toString(36);
   }
-  return id;
+  return __runtimeSessionId;
 }
 
 export function saveTokens({ access_token, refresh_token }) {

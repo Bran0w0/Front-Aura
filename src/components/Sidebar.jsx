@@ -5,7 +5,7 @@ import { HiMenuAlt2 } from "react-icons/hi"
 import { IoClose } from "react-icons/io5"
 import AuraHead from "./AuraHead"
 import { getConversations, createConversation, authMe, authLogout, deleteConversation } from "../lib/api"
-import { clearTokens, getRefreshToken, getUserInfo, getAccessToken, colorFromString, getSessionId } from "../lib/auth"
+import { clearTokens, getRefreshToken, getUserInfo, getAccessToken, colorFromString } from "../lib/auth"
 import { useNavigate } from "react-router-dom"
 
 export default function Sidebar({ onSelect, onOpenProfile }) {
@@ -39,9 +39,8 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
         const { data } = await getConversations({ user_id: uid })
         list = (data?.conversations || []).map((c) => ({ conversation_id: c.id, title: c.title || "Nuevo chat", updated_at: c.updated_at || "" }))
       } else {
-        const sid = getSessionId()
-        const { data } = await getConversations({ session_id: sid })
-        list = (data?.conversations || []).map((c) => ({ conversation_id: c.id, title: c.title || "Nuevo chat", updated_at: c.updated_at || "" }))
+        // Modo invitado: no cargar desde el servidor; chats efímeros por sesión
+        list = []
       }
       list.sort((a, b) => (b.updated_at || "").localeCompare(a.updated_at || ""))
       setItems(list)
@@ -51,12 +50,23 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
   useEffect(() => {
     const onTitle = (e) => {
       const { id, title } = e.detail || {}
-      if (!id || !title) return
+      if (!title) return
+      const uid = getUserInfo()?.id
+      const guest = !uid
       setItems((prev) => {
-        const exists = prev.some((it) => it.conversation_id === id)
-        if (exists) {
-          return prev.map((it) => (it.conversation_id === id ? { ...it, title, updated_at: new Date().toISOString() } : it))
+        if (guest) {
+          // En invitado, actualiza el primer chat local (null id) en lugar de crear uno con id de servidor
+          const idx = prev.findIndex((it) => it.conversation_id == null)
+          if (idx >= 0) {
+            const copy = prev.slice()
+            copy[idx] = { ...copy[idx], title, updated_at: new Date().toISOString() }
+            return copy
+          }
+          return prev
         }
+        if (!id) return prev
+        const exists = prev.some((it) => it.conversation_id === id)
+        if (exists) return prev.map((it) => (it.conversation_id === id ? { ...it, title, updated_at: new Date().toISOString() } : it))
         const newItem = { conversation_id: id, title, updated_at: new Date().toISOString() }
         return [newItem, ...prev]
       })
@@ -237,9 +247,6 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
                                 const uid = getUserInfo()?.id
                                 if (uid) {
                                   await deleteConversation(c.conversation_id)
-                                } else {
-                                  const sid = getSessionId();
-                                  await deleteConversation(c.conversation_id, { session_id: sid })
                                 }
                                 setItems(prev => prev.filter(it => it.conversation_id !== c.conversation_id))
                               } catch {}
@@ -347,7 +354,5 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     </>
   )
 }
-
-
 
 
