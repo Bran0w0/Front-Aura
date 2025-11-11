@@ -123,6 +123,12 @@
   }
 }
 
+@media (max-width: 767px) {
+  .aura-center {
+    transform: translateX(0px) translateY(-64px);
+  }
+}
+
 .chat-wrapper {
   display: flex;
   align-items: center;
