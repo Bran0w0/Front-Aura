@@ -137,10 +137,12 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
   const profileMenu = (
     <div ref={profileMenuRef} className="bg-transparent backdrop-blur-lg text-white rounded-2xl border border-white/10 ring-1 ring-inset ring-white/10 shadow-xl overflow-hidden">
       <div className="px-4 py-3 text-sm text-gray-300 border-b border-white/10 truncate">{email}</div>
-      <button onClick={() => { setProfileOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
-        <FiSettings className="w-5 h-5 text-gray-300" />
-        <span>Perfil</span>
-      </button>
+      {!isGuest && (
+        <button onClick={() => { setProfileOpen(false); onOpenProfile?.(); }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
+          <FiSettings className="w-5 h-5 text-gray-300" />
+          <span>Perfil</span>
+        </button>
+      )}
       {isGuest ? (
         <button onClick={() => { setProfileOpen(false); navigate('/login') }} className="w-full flex items-center gap-2 px-4 py-3 text-left hover:bg-white/10 transition-colors">
           <FiLogIn className="w-5 h-5 text-gray-300" />
@@ -273,22 +275,22 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
           </>
         )}
 
-        {!isGuest && (
-          <div className="px-3 py-4 border-t border-white/10 relative">
-            <button ref={profileBtnRef} className={`${rowBase}`} onClick={() => setProfileOpen(v=>!v)}>
-              <span className={iconCell}><div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}><span className="text-white text-sm font-medium leading-none">{initial}</span></div></span>
-              <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>{displayName}</span>
-            </button>
-            {profileOpen && (
-              collapsed
-                ? createPortal(
-                    <div style={{ position: 'fixed', left: fixedPos.left, bottom: fixedPos.bottom, width: fixedPos.width }} className="z-[130]">
-                      {profileMenu}
-                    </div>, document.body)
-                : (<div className="absolute left-3 right-3 bottom-24 z-[120]">{profileMenu}</div>)
-            )}
-          </div>
-        )}
+        {isGuest && (<div className="flex-1 min-h-0" />)}
+
+        <div className="px-3 py-4 border-t border-white/10 relative">
+          <button ref={profileBtnRef} className={`${rowBase}`} onClick={() => setProfileOpen(v=>!v)}>
+            <span className={iconCell}><div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: avatarBg }}><span className="text-white text-sm font-medium leading-none">{initial}</span></div></span>
+            <span className={`${labelCell} ${collapsed ? 'opacity-0' : ''}`}>{displayName}</span>
+          </button>
+          {profileOpen && (
+            collapsed
+              ? createPortal(
+                  <div style={{ position: 'fixed', left: fixedPos.left, bottom: fixedPos.bottom, width: fixedPos.width }} className="z-[130]">
+                    {profileMenu}
+                  </div>, document.body)
+              : (<div className="absolute left-3 right-3 bottom-24 z-[120]">{profileMenu}</div>)
+          )}
+        </div>
       </div>
 
       {!isGuest && searchOpen && createPortal(
@@ -363,4 +365,3 @@ export default function Sidebar({ onSelect, onOpenProfile }) {
     </>
   )
 }
-
