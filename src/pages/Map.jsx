@@ -5,6 +5,7 @@ import { FiTarget, FiNavigation, FiRefreshCw, FiEye, FiEyeOff } from "react-icon
 import { getGridMeta, nearestWalkable, findPath } from "../lib/pathfinding"
 
 const gridMeta = getGridMeta()
+const AURA_HEAD_SRC = "/Cabeza%20AURA.png"
 
 const MODE_LABEL = {
   origin: "origen",
@@ -85,14 +86,69 @@ export default function MapPage() {
     setError("")
   }
 
-  const overlayPath = useMemo(() => {
+  const routePathId = useMemo(() => `map-route-${Math.random().toString(36).slice(2, 9)}`, [])
+
+  const routePathD = useMemo(() => {
     if (!path?.length) return ""
-    return path.map((p) => `${p.col},${p.row}`).join(" ")
+    return path.map((p, idx) => `${idx === 0 ? "M" : "L"} ${p.col} ${p.row}`).join(" ")
+  }, [path])
+
+  const routeDuration = useMemo(() => {
+    if (!path?.length) return 0
+    return Math.min(Math.max(path.length * 0.05, 1.35), 6)
   }, [path])
 
   const renderMarker = (point, color) => {
     if (!point) return null
     return <circle cx={point.col} cy={point.row} r={2.6} fill={color} stroke="#040B17" strokeWidth={0.8} />
+  }
+
+  const renderAuraDestination = (point) => {
+    if (!point) return null
+    const size = 7
+    const half = size / 2
+    return (
+      <>
+        <circle cx={point.col} cy={point.row} r={3.8} className="map-destination-glow" />
+        {!path?.length && (
+          <image
+            href={AURA_HEAD_SRC}
+            x={point.col - half}
+            y={point.row - half}
+            width={size}
+            height={size}
+            className="map-destination-icon map-destination-icon--idle"
+            preserveAspectRatio="xMidYMid meet"
+          />
+        )}
+      </>
+    )
+  }
+
+  const renderAuraTraveler = () => {
+    if (!routePathD) return null
+    const size = 7
+    return (
+      <g className="map-travel" key={`${routePathD}-${routeDuration.toFixed(2)}`}>
+        <image
+          href={AURA_HEAD_SRC}
+          x={-size / 2}
+          y={-size / 2}
+          width={size}
+          height={size}
+          className="map-destination-icon map-destination-icon--travel"
+          preserveAspectRatio="xMidYMid meet"
+        />
+        <animateMotion
+          begin="0s"
+          dur={`${routeDuration || 2}s`}
+          fill="freeze"
+          key={`${routePathD}-${routeDuration.toFixed(2)}`}
+        >
+          <mpath xlinkHref={`#${routePathId}`} />
+        </animateMotion>
+      </g>
+    )
   }
 
   const infoRow = (label, point) => (
@@ -162,18 +218,21 @@ export default function MapPage() {
               preserveAspectRatio="none"
               className="absolute inset-0 w-full h-full pointer-events-none"
             >
-              {path?.length ? (
-                <polyline
-                  points={overlayPath}
-                  fill="none"
-                  stroke="#4CC9F0"
-                  strokeWidth={1.6}
-                  strokeLinejoin="round"
-                  strokeLinecap="round"
-                />
+              {routePathD ? (
+                <>
+                  <path
+                    id={routePathId}
+                    d={routePathD}
+                    fill="none"
+                    className="map-route"
+                    pathLength="1"
+                    style={{ "--route-duration": `${routeDuration}s` }}
+                  />
+                  {renderAuraTraveler()}
+                </>
               ) : null}
               {renderMarker(origin, "#2DD4BF")}
-              {renderMarker(destination, "#FDE047")}
+              {renderAuraDestination(destination)}
             </svg>
           </div>
 
@@ -183,7 +242,14 @@ export default function MapPage() {
               <span>Origen</span>
             </div>
             <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-full border border-white/10">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#FDE047]" />
+              <span className="w-5 h-5 inline-flex items-center justify-center rounded-full bg-white/10">
+                <img
+                  src={AURA_HEAD_SRC}
+                  alt="Aura destino"
+                  className="w-4 h-4 object-contain"
+                  draggable={false}
+                />
+              </span>
               <span>Destino</span>
             </div>
             <button
