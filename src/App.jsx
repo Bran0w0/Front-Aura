@@ -1,5 +1,6 @@
 import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import GuestHome from "./pages/GuestHome";
 import Timetable from "./pages/Timetable";
 import Map from "./pages/Map";
@@ -26,6 +27,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<RedirectIfAuthed><Login /></RedirectIfAuthed>} />
+        <Route path="/register" element={<RedirectIfAuthed><Register /></RedirectIfAuthed>} />
         <Route
           path="/home"
           element={
